@@ -153,5 +153,50 @@ class AnalyticsService
         return now()->hour === $avgPeakHour;
     }
 
+    /**
+     * Combined daily breakdown for a restaurant within a date range.
+     * Returns one row per day with orders, revenue, AOV, and peak hour merged.
+     * Use this to power multi-metric charts or summary tables.
+     */
+    public function getDailyBreakdown(int $restaurantId, string $startDate, string $endDate): array
+    {
+        $orders = $this->ordersPerDay($restaurantId, $startDate, $endDate);
+        $revenue = $this->revenuePerDay($restaurantId, $startDate, $endDate);
+        $aov = $this->aovPerDay($restaurantId, $startDate, $endDate);
+        $peakHour = $this->peakHourPerDay($restaurantId, $startDate, $endDate);
+
+        $result = [];
+
+        foreach ($orders as $i => $order) {
+            $date = $order->date;
+            $result[$date] = [
+                'date'      => $date,
+                'orders'    => $order->value,
+                'revenue'   => $revenue[$i]->value ?? 0,
+                'aov'       => $aov[$i]->value ?? 0,
+                'peak_hour' => $peakHour[$i]['value'] ?? null,
+            ];
+        }
+
+        return array_values($result);
+    }
+
+    /**
+     * Returns the top N performing days for a restaurant by revenue within a date range.
+     * Useful for highlighting best trading days to the restaurant owner.
+     */
+    public function topPerformingDays(int $restaurantId, string $startDate, string $endDate, int $limit = 5): array
+    {
+        return DB::table('orders')
+            ->selectRaw('DATE(order_time) as date, COUNT(*) as orders, SUM(order_amount) as revenue, AVG(order_amount) as aov')
+            ->where('restaurant_id', $restaurantId)
+            ->whereBetween('order_time', [$startDate, $endDate])
+            ->groupBy('date')
+            ->orderByDesc('revenue')
+            ->limit($limit)
+            ->get()
+            ->toArray();
+    }
+
     // ============ Extra Analytics End =============
 }
