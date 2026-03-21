@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Cache;
 use App\Models\Restaurant;
 
 class AnalyticsService
@@ -12,52 +13,74 @@ class AnalyticsService
 
     /**
      * Total revenue for a restaurant within a date range.
+     * TTL: 15 min normally, 5 min during peak hours.
      */
     public function revenueForDateRange(int $restaurantId, string $startDate, string $endDate): float
     {
-        return Restaurant::findOrFail($restaurantId)
-            ->orders()
-            ->whereBetween('order_time', [$startDate, $endDate])
-            ->sum('order_amount');
+        return Cache::remember(
+            "analytics:revenue:{$restaurantId}:{$startDate}:{$endDate}",
+            $this->summaryTtl(),
+            fn() => Restaurant::findOrFail($restaurantId)
+                ->orders()
+                ->whereBetween('order_time', [$startDate, $endDate])
+                ->sum('order_amount')
+        );
     }
 
     /**
      * Total order count for a restaurant within a date range.
+     * TTL: 15 min normally, 5 min during peak hours.
      */
     public function orderCountForDateRange(int $restaurantId, string $startDate, string $endDate): int
     {
-        return Restaurant::findOrFail($restaurantId)
-            ->orders()
-            ->whereBetween('order_time', [$startDate, $endDate])
-            ->count();
+        return Cache::remember(
+            "analytics:order_count:{$restaurantId}:{$startDate}:{$endDate}",
+            $this->summaryTtl(),
+            fn() => Restaurant::findOrFail($restaurantId)
+                ->orders()
+                ->whereBetween('order_time', [$startDate, $endDate])
+                ->count()
+        );
     }
 
     /**
      * Average order value (AOV) for a restaurant within a date range.
+     * TTL: 15 min normally, 5 min during peak hours.
      */
     public function averageOrderValueForDateRange(int $restaurantId, string $startDate, string $endDate): float
     {
-        return Restaurant::findOrFail($restaurantId)
-            ->orders()
-            ->whereBetween('order_time', [$startDate, $endDate])
-            ->avg('order_amount') ?? 0;
+        return Cache::remember(
+            "analytics:aov:{$restaurantId}:{$startDate}:{$endDate}",
+            $this->summaryTtl(),
+            fn() => Restaurant::findOrFail($restaurantId)
+                ->orders()
+                ->whereBetween('order_time', [$startDate, $endDate])
+                ->avg('order_amount') ?? 0
+        );
     }
 
     /**
      * Returns the hour (0-23) with the highest order volume for a restaurant on a given date.
      * Returns 0 if no orders found.
+     * TTL: 30 min. Hour-level granularity makes 30 min staleness acceptable.
      */
     public function getPeakOrderHour(int $restaurantId, string $date): int
     {
-        $result = DB::table('orders')
-            ->selectRaw('HOUR(order_time) as hour, COUNT(*) as total')
-            ->where('restaurant_id', $restaurantId)
-            ->whereDate('order_time', $date)
-            ->groupBy('hour')
-            ->orderByDesc('total')
-            ->first();
+        return Cache::remember(
+            "analytics:peak_hour:{$restaurantId}:{$date}",
+            1800,
+            function () use ($restaurantId, $date) {
+                $result = DB::table('orders')
+                    ->selectRaw('HOUR(order_time) as hour, COUNT(*) as total')
+                    ->where('restaurant_id', $restaurantId)
+                    ->whereDate('order_time', $date)
+                    ->groupBy('hour')
+                    ->orderByDesc('total')
+                    ->first();
 
-        return $result ? $result->hour : 0;
+                return $result ? $result->hour : 0;
+            }
+        );
     }
 
     // ============ Total Analytics End =============
@@ -140,12 +163,12 @@ class AnalyticsService
     // ============ Per Day Analytics End =============
 
 
-
     // ============ Extra Analytics Start =============
 
     /**
      * Checks if the current hour falls within the average peak hour for a restaurant.
      * Averages the peak hour across all days in the date range, then compares to now().
+     * Not cached. Must always reflect the current time.
      */
     public function isCurrentlyPeakHour(int $restaurantId, string $startDate, string $endDate): bool
     {
@@ -173,47 +196,72 @@ class AnalyticsService
     /**
      * Combined daily breakdown for a restaurant within a date range.
      * Returns one row per day with orders, revenue, AOV, and peak hour merged.
-     * Use this to power multi-metric charts or summary tables.
+     * TTL: 30 min. Only today's row changes; historical days are immutable.
      */
     public function getDailyBreakdown(int $restaurantId, string $startDate, string $endDate): array
     {
-        $orders = $this->ordersPerDay($restaurantId, $startDate, $endDate);
-        $revenue = $this->revenuePerDay($restaurantId, $startDate, $endDate);
-        $aov = $this->aovPerDay($restaurantId, $startDate, $endDate);
-        $peakHour = $this->peakHourPerDay($restaurantId, $startDate, $endDate);
+        return Cache::remember(
+            "analytics:daily_breakdown:{$restaurantId}:{$startDate}:{$endDate}",
+            1800,
+            function () use ($restaurantId, $startDate, $endDate) {
+                $orders   = $this->ordersPerDay($restaurantId, $startDate, $endDate);
+                $revenue  = $this->revenuePerDay($restaurantId, $startDate, $endDate);
+                $aov      = $this->aovPerDay($restaurantId, $startDate, $endDate);
+                $peakHour = $this->peakHourPerDay($restaurantId, $startDate, $endDate);
 
-        $result = [];
+                $result = [];
 
-        foreach ($orders as $i => $order) {
-            $date = $order->date;
-            $result[$date] = [
-                'date'      => $date,
-                'orders'    => $order->value,
-                'revenue'   => $revenue[$i]->value ?? 0,
-                'aov'       => $aov[$i]->value ?? 0,
-                'peak_hour' => $peakHour[$i]['value'] ?? null,
-            ];
-        }
+                foreach ($orders as $i => $order) {
+                    $date = $order->date;
+                    $result[$date] = [
+                        'date'      => $date,
+                        'orders'    => $order->value,
+                        'revenue'   => $revenue[$i]->value ?? 0,
+                        'aov'       => $aov[$i]->value ?? 0,
+                        'peak_hour' => $peakHour[$i]['value'] ?? null,
+                    ];
+                }
 
-        return array_values($result);
+                return array_values($result);
+            }
+        );
     }
 
     /**
      * Returns the top N performing days for a restaurant by revenue within a date range.
-     * Useful for highlighting best trading days to the restaurant owner.
+     * TTL: 1 hour. Historical ranking, changes slowly.
      */
     public function topPerformingDays(int $restaurantId, string $startDate, string $endDate, int $limit = 5): array
     {
-        return DB::table('orders')
-            ->selectRaw('DATE(order_time) as date, COUNT(*) as orders, SUM(order_amount) as revenue, AVG(order_amount) as aov')
-            ->where('restaurant_id', $restaurantId)
-            ->whereBetween('order_time', [$startDate, $endDate])
-            ->groupBy('date')
-            ->orderByDesc('revenue')
-            ->limit($limit)
-            ->get()
-            ->toArray();
+        return Cache::remember(
+            "analytics:top_days:{$restaurantId}:{$startDate}:{$endDate}:{$limit}",
+            3600,
+            fn() => DB::table('orders')
+                ->selectRaw('DATE(order_time) as date, COUNT(*) as orders, SUM(order_amount) as revenue, AVG(order_amount) as aov')
+                ->where('restaurant_id', $restaurantId)
+                ->whereBetween('order_time', [$startDate, $endDate])
+                ->groupBy('date')
+                ->orderByDesc('revenue')
+                ->limit($limit)
+                ->get()
+                ->toArray()
+        );
     }
 
     // ============ Extra Analytics End =============
+
+
+    // ============ Private Helpers =============
+
+    /**
+     * TTL for summary KPIs (revenue, order count, AOV).
+     * Uses a shorter TTL during typical meal-rush hours so data stays fresher
+     * when owners are most likely watching the dashboard.
+     * Peak hours heuristic: 11am-2pm and 6pm-9pm.
+     */
+    private function summaryTtl(): int
+    {
+        $peakHours = [11, 12, 13, 14, 18, 19, 20, 21];
+        return in_array(now()->hour, $peakHours) ? 300 : 900; // 5 min : 15 min
+    }
 }
