@@ -15,7 +15,7 @@ class AnalyticsService
      */
     public function revenueForDateRange(int $restaurantId, string $startDate, string $endDate): float
     {
-        return Restaurant::find($restaurantId)
+        return Restaurant::findOrFail($restaurantId)
             ->orders()
             ->whereBetween('order_time', [$startDate, $endDate])
             ->sum('order_amount');
@@ -26,7 +26,7 @@ class AnalyticsService
      */
     public function orderCountForDateRange(int $restaurantId, string $startDate, string $endDate): int
     {
-        return Restaurant::find($restaurantId)
+        return Restaurant::findOrFail($restaurantId)
             ->orders()
             ->whereBetween('order_time', [$startDate, $endDate])
             ->count();
@@ -37,10 +37,27 @@ class AnalyticsService
      */
     public function averageOrderValueForDateRange(int $restaurantId, string $startDate, string $endDate): float
     {
-        return Restaurant::find($restaurantId)
+        return Restaurant::findOrFail($restaurantId)
             ->orders()
             ->whereBetween('order_time', [$startDate, $endDate])
             ->avg('order_amount') ?? 0;
+    }
+
+    /**
+     * Returns the hour (0-23) with the highest order volume for a restaurant on a given date.
+     * Returns 0 if no orders found.
+     */
+    public function getPeakOrderHour(int $restaurantId, string $date): int
+    {
+        $result = DB::table('orders')
+            ->selectRaw('HOUR(order_time) as hour, COUNT(*) as total')
+            ->where('restaurant_id', $restaurantId)
+            ->whereDate('order_time', $date)
+            ->groupBy('hour')
+            ->orderByDesc('total')
+            ->first();
+
+        return $result ? $result->hour : 0;
     }
 
     // ============ Total Analytics End =============

@@ -15,5 +15,40 @@ return Application::configure(basePath: dirname(__DIR__))
         //
     })
     ->withExceptions(function (Exceptions $exceptions): void {
-        //
+        // 404 — model not found (triggered by findOrFail())
+        $exceptions->render(function (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
+            $ids   = implode(', ', $e->getIds());
+            return response()->json([
+                'success' => false,
+                'message' => "The requested resource was not found {$ids}.",
+                'data'    => null,
+            ], 404);
+        });
+
+        // 500 — database error (connection issues, bad queries, constraint violations)
+        $exceptions->render(function (\Illuminate\Database\QueryException $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Service temporarily unavailable. Please try again later.',
+                'data'    => null,
+            ], 500);
+        });
+
+        // 500 — unexpected catch-all (always last)
+        $exceptions->render(function (\Throwable $e) {
+            if (app()->environment('local')) {
+                // In local dev, expose the real error so you can debug
+                return response()->json([
+                    'success' => false,
+                    'message' => $e->getMessage(),
+                    'data'    => null,
+                ], 500);
+            }
+
+            return response()->json([
+                'success' => false,
+                'message' => 'An unexpected error occurred.',
+                'data'    => null,
+            ], 500);
+        });
     })->create();
