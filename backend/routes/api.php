@@ -16,6 +16,7 @@ Route::prefix('analytics/{restaurantId}')->group(function () {
     Route::get('/summary',   [AnalyticsController::class, 'summary']);
     Route::get('/daily',     [AnalyticsController::class, 'daily']);
     Route::get('/top-days',  [AnalyticsController::class, 'topDays']);
+    Route::get('/orders',    [AnalyticsController::class, 'orders']);
     Route::get('/peak-hour', [AnalyticsController::class, 'peakHour']);
     Route::get('/is-peak',   [AnalyticsController::class, 'isPeakHour']);
 });

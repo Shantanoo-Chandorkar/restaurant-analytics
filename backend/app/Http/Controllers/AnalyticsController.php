@@ -71,6 +71,23 @@ class AnalyticsController extends Controller
     }
 
     /**
+     * GET /api/analytics/{restaurantId}/orders
+     * Returns paginated orders for a restaurant within a date range.
+     * Query params: start_date, end_date, page (default 1), per_page (default 15, max 50)
+     */
+    public function orders(Request $request, int $restaurantId)
+    {
+        $startDate = $request->query('start_date', now()->subDays(7)->toDateString());
+        $endDate   = $request->query('end_date', now()->toDateString());
+        $page      = max(1, (int) $request->query('page', 1));
+        $perPage   = min(50, max(1, (int) $request->query('per_page', 15)));
+
+        return $this->success($this->analyticsService->getPaginatedOrders(
+            $restaurantId, $startDate, $endDate, $page, $perPage
+        ));
+    }
+
+    /**
      * GET /api/analytics/{restaurantId}/is-peak
      * Returns whether the current hour is within the average peak hour.
      * Query params: start_date, end_date (default: last 7 days)

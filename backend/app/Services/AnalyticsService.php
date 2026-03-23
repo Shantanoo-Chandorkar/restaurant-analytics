@@ -248,6 +248,32 @@ class AnalyticsService
         );
     }
 
+    /**
+     * Returns paginated orders for a restaurant within a date range.
+     * TTL: 30 min. Orders are immutable once placed.
+     */
+    public function getPaginatedOrders(
+        int $restaurantId, string $startDate, string $endDate, int $page, int $perPage
+    ): array {
+        $cacheKey = "analytics:orders:{$restaurantId}:{$startDate}:{$endDate}:{$page}:{$perPage}";
+        return Cache::remember($cacheKey, 1800, function () use ($restaurantId, $startDate, $endDate, $page, $perPage) {
+            $result = DB::table('orders')
+                ->where('restaurant_id', $restaurantId)
+                ->whereBetween('order_time', [$startDate, $this->endOfDay($endDate)])
+                ->orderByDesc('order_time')
+                ->select('id', 'order_time', 'order_amount')
+                ->paginate($perPage, ['*'], 'page', $page);
+
+            return [
+                'data'         => $result->items(),
+                'total'        => $result->total(),
+                'per_page'     => $result->perPage(),
+                'current_page' => $result->currentPage(),
+                'last_page'    => $result->lastPage(),
+            ];
+        });
+    }
+
     // ============ Extra Analytics End =============
 
 
