@@ -37,13 +37,21 @@ class RestaurantService {
             3600,
             fn() => Restaurant::join('orders', 'restaurants.id', '=', 'orders.restaurant_id')
                 ->selectRaw('restaurants.*, SUM(orders.order_amount) as total_revenue')
-                ->whereBetween('orders.order_time', [$startDate, $endDate])
+                ->whereBetween('orders.order_time', [$startDate, $this->endOfDay($endDate)])
                 ->groupBy('restaurants.id')
                 ->orderByDesc('total_revenue')
                 ->limit($limit)
                 ->get()
                 ->toArray()
         );
+    }
+
+    /**
+     * Appends 23:59:59 to a date string so whereBetween includes the full end day.
+     */
+    private function endOfDay(string $date): string
+    {
+        return $date . ' 23:59:59';
     }
 
     /**

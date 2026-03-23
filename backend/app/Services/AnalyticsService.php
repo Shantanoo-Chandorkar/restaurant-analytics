@@ -22,7 +22,7 @@ class AnalyticsService
             $this->summaryTtl(),
             fn() => Restaurant::findOrFail($restaurantId)
                 ->orders()
-                ->whereBetween('order_time', [$startDate, $endDate])
+                ->whereBetween('order_time', [$startDate, $this->endOfDay($endDate)])
                 ->sum('order_amount')
         );
     }
@@ -38,7 +38,7 @@ class AnalyticsService
             $this->summaryTtl(),
             fn() => Restaurant::findOrFail($restaurantId)
                 ->orders()
-                ->whereBetween('order_time', [$startDate, $endDate])
+                ->whereBetween('order_time', [$startDate, $this->endOfDay($endDate)])
                 ->count()
         );
     }
@@ -54,7 +54,7 @@ class AnalyticsService
             $this->summaryTtl(),
             fn() => Restaurant::findOrFail($restaurantId)
                 ->orders()
-                ->whereBetween('order_time', [$startDate, $endDate])
+                ->whereBetween('order_time', [$startDate, $this->endOfDay($endDate)])
                 ->avg('order_amount') ?? 0
         );
     }
@@ -97,7 +97,7 @@ class AnalyticsService
         return DB::table('orders')
             ->selectRaw('DATE(order_time) as date, COUNT(*) as value')
             ->where('restaurant_id', $restaurantId)
-            ->whereBetween('order_time', [$startDate, $endDate])
+            ->whereBetween('order_time', [$startDate, $this->endOfDay($endDate)])
             ->groupBy('date')
             ->orderBy('date')
             ->get()
@@ -113,7 +113,7 @@ class AnalyticsService
         return DB::table('orders')
             ->selectRaw('DATE(order_time) as date, SUM(order_amount) as value')
             ->where('restaurant_id', $restaurantId)
-            ->whereBetween('order_time', [$startDate, $endDate])
+            ->whereBetween('order_time', [$startDate, $this->endOfDay($endDate)])
             ->groupBy('date')
             ->orderBy('date')
             ->get()
@@ -129,7 +129,7 @@ class AnalyticsService
         return DB::table('orders')
             ->selectRaw('DATE(order_time) as date, AVG(order_amount) as value')
             ->where('restaurant_id', $restaurantId)
-            ->whereBetween('order_time', [$startDate, $endDate])
+            ->whereBetween('order_time', [$startDate, $this->endOfDay($endDate)])
             ->groupBy('date')
             ->orderBy('date')
             ->get()
@@ -146,7 +146,7 @@ class AnalyticsService
         $rows = DB::table('orders')
             ->selectRaw('DATE(order_time) as date, HOUR(order_time) as hour, COUNT(*) as total')
             ->where('restaurant_id', $restaurantId)
-            ->whereBetween('order_time', [$startDate, $endDate])
+            ->whereBetween('order_time', [$startDate, $this->endOfDay($endDate)])
             ->groupBy('date', 'hour')
             ->orderBy('date')
             ->get();
@@ -175,7 +175,7 @@ class AnalyticsService
         $rows = DB::table('orders')
             ->selectRaw('DATE(order_time) as date, HOUR(order_time) as hour, COUNT(*) as total')
             ->where('restaurant_id', $restaurantId)
-            ->whereBetween('order_time', [$startDate, $endDate])
+            ->whereBetween('order_time', [$startDate, $this->endOfDay($endDate)])
             ->groupBy('date', 'hour')
             ->get();
 
@@ -239,7 +239,7 @@ class AnalyticsService
             fn() => DB::table('orders')
                 ->selectRaw('DATE(order_time) as date, COUNT(*) as orders, SUM(order_amount) as revenue, AVG(order_amount) as aov')
                 ->where('restaurant_id', $restaurantId)
-                ->whereBetween('order_time', [$startDate, $endDate])
+                ->whereBetween('order_time', [$startDate, $this->endOfDay($endDate)])
                 ->groupBy('date')
                 ->orderByDesc('revenue')
                 ->limit($limit)
@@ -252,6 +252,14 @@ class AnalyticsService
 
 
     // ============ Private Helpers =============
+
+    /**
+     * Appends 23:59:59 to a date string so whereBetween includes the full end day.
+     */
+    private function endOfDay(string $date): string
+    {
+        return $date . ' 23:59:59';
+    }
 
     /**
      * TTL for summary KPIs (revenue, order count, AOV).
