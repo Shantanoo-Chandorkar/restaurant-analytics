@@ -1,6 +1,5 @@
 'use client'
 
-import { useMemo } from 'react'
 import { useDateRangeStore } from '@/store/useDateRangeStore'
 import { useFilterStore } from '@/store/useFilterStore'
 import { useRestaurants } from '@/hooks/useRestaurants'
@@ -35,6 +34,8 @@ export default function RestaurantDirectory() {
     sortDirection,
     cuisine,
     location,
+    startDate,
+    endDate,
   })
 
   const { cuisines, locations } = useRestaurantsMeta()
@@ -113,8 +114,7 @@ export default function RestaurantDirectory() {
             <RestaurantCard
               key={restaurant.id}
               restaurant={restaurant}
-              startDate={startDate}
-              endDate={endDate}
+              summary={restaurant.summary}
             />
           ))}
           {restaurants.length === 0 && (

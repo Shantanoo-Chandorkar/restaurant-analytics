@@ -1,7 +1,6 @@
 'use client'
 
 import { Badge } from './ui/badge'
-import { useRestaurantSummary } from '@/hooks/useRestaurantSummary'
 import { formatCurrencyShort } from '@/lib/format'
 import type { TopRestaurant } from '@/lib/types'
 
@@ -14,12 +13,9 @@ const RANK_STYLES: Record<number, { badge: string; label: string }> = {
 interface Props {
   restaurant: TopRestaurant
   rank: number
-  startDate: string
-  endDate: string
 }
 
-export default function TopPerformerCard({ restaurant, rank, startDate, endDate }: Props) {
-  const { data: summary } = useRestaurantSummary(restaurant.id, startDate, endDate)
+export default function TopPerformerCard({ restaurant, rank }: Props) {
   const rankStyle = RANK_STYLES[rank] ?? { badge: 'bg-gray-200 text-gray-600', label: `#${rank}` }
 
   return (
@@ -44,9 +40,7 @@ export default function TopPerformerCard({ restaurant, rank, startDate, endDate 
         </div>
         <div>
           <p className="text-xs text-slate-500">Orders</p>
-          <p className="text-base font-bold text-blue-700">
-            {summary ? summary.orders : '—'}
-          </p>
+          <p className="text-base font-bold text-blue-700">{restaurant.orders}</p>
         </div>
       </div>
     </div>

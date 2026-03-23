@@ -41,8 +41,6 @@ export default function TopPerformers() {
               key={restaurant.id}
               restaurant={restaurant}
               rank={index + 1}
-              startDate={startDate}
-              endDate={endDate}
             />
           ))}
         </div>
@@ -64,8 +62,6 @@ export default function TopPerformers() {
                   key={restaurant.id}
                   restaurant={restaurant}
                   rank={index + 1}
-                  startDate={compDates.compStart}
-                  endDate={compDates.compEnd}
                 />
               ))}
             </div>

@@ -5,8 +5,14 @@ export interface Restaurant {
   location: string
 }
 
+export interface RestaurantWithSummary extends Restaurant {
+  summary?: Summary
+}
+
 export interface TopRestaurant extends Restaurant {
   total_revenue: number
+  orders: number
+  aov: number
 }
 
 export interface Summary {
