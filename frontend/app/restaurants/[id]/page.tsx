@@ -4,17 +4,21 @@ import { useParams } from 'next/navigation'
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { useDateRangeStore } from '@/store/useDateRangeStore'
+import { useComparisonStore } from '@/store/useComparisonStore'
 import { useRestaurantSummary } from '@/hooks/useRestaurantSummary'
 import { useAnalyticsDaily } from '@/hooks/useAnalyticsDaily'
 import { apiFetch } from '@/lib/api'
 import { formatCurrency } from '@/lib/format'
+import { getComparisonDates, formatDateRange } from '@/lib/comparison'
 import KpiCard from '@/components/KpiCard'
 import Header from '@/components/Header'
+import PageHeader from '@/components/PageHeader'
 import DailyBreakdownTable from '@/components/DailyBreakdownTable'
 import DailyOrdersChart from '@/components/charts/DailyOrdersChart'
 import DailyRevenueChart from '@/components/charts/DailyRevenueChart'
 import AovChart from '@/components/charts/AovChart'
 import PeakHourChart from '@/components/charts/PeakHourChart'
+import OrdersTable from '@/components/OrdersTable'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import type { Restaurant } from '@/lib/types'
 
@@ -22,6 +26,7 @@ export default function RestaurantDetailPage() {
   const params = useParams()
   const id = Number(params.id)
   const { startDate, endDate } = useDateRangeStore()
+  const { type: comparisonType } = useComparisonStore()
 
   const [restaurant, setRestaurant] = useState<Restaurant | null>(null)
   useEffect(() => {
@@ -32,32 +37,49 @@ export default function RestaurantDetailPage() {
   const { data: summary, loading: summaryLoading } = useRestaurantSummary(id, startDate, endDate)
   const { data: daily, loading: dailyLoading } = useAnalyticsDaily(id, startDate, endDate)
 
+  const compDates = getComparisonDates(startDate, endDate, comparisonType)
+  const { data: compSummary } = useRestaurantSummary(
+    compDates ? id : 0,
+    compDates?.compStart ?? startDate,
+    compDates?.compEnd ?? endDate
+  )
+  const { data: compDaily } = useAnalyticsDaily(
+    compDates ? id : 0,
+    compDates?.compStart ?? startDate,
+    compDates?.compEnd ?? endDate
+  )
+
+  function delta(current: number, comparison: number): string {
+    if (!comparison) return ''
+    const pct = ((current - comparison) / comparison) * 100
+    return (pct >= 0 ? '▲' : '▼') + Math.abs(pct).toFixed(1) + '%'
+  }
+
   return (
-    <div className="min-h-screen">
+    <div className="min-h-screen bg-slate-50">
       <Header />
       <main className="max-w-7xl mx-auto px-6 py-8">
 
-        {/* Back + Title */}
-        <div className="mb-6">
+        {/* Back link */}
+        <div className="mb-4">
           <Link
             href="/"
             className="inline-flex items-center gap-1 text-sm text-blue-600 hover:text-blue-700"
           >
             ← Back to Dashboard
           </Link>
-          <h2 className="text-2xl font-bold text-slate-900 mt-2">
-            {restaurant?.name ?? 'Restaurant Detail'}
-          </h2>
           {restaurant && (
-            <p className="text-sm text-slate-500 mt-0.5">
+            <p className="text-sm text-slate-500 mt-1">
               {restaurant.cuisine} · {restaurant.location}
             </p>
           )}
         </div>
 
+        <PageHeader title={restaurant?.name ?? 'Restaurant Detail'} />
+
         {/* KPI Cards */}
         {summaryLoading ? (
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8">
             {[1, 2, 3].map((i) => (
               <div key={i} className="h-24 bg-slate-100 rounded-xl animate-pulse" />
             ))}
@@ -70,6 +92,7 @@ export default function RestaurantDetailPage() {
               value={String(summary.orders)}
               colorClass="text-blue-600"
               bgClass="bg-blue-50"
+              comparison={compSummary ? { value: String(compSummary.orders), delta: delta(summary.orders, compSummary.orders) } : undefined}
             />
             <KpiCard
               icon="💰"
@@ -77,6 +100,7 @@ export default function RestaurantDetailPage() {
               value={formatCurrency(summary.revenue)}
               colorClass="text-green-600"
               bgClass="bg-green-50"
+              comparison={compSummary ? { value: formatCurrency(compSummary.revenue), delta: delta(summary.revenue, compSummary.revenue) } : undefined}
             />
             <KpiCard
               icon="📊"
@@ -84,6 +108,7 @@ export default function RestaurantDetailPage() {
               value={formatCurrency(summary.aov)}
               colorClass="text-purple-600"
               bgClass="bg-purple-50"
+              comparison={compSummary ? { value: formatCurrency(compSummary.aov), delta: delta(summary.aov, compSummary.aov) } : undefined}
             />
           </div>
         ) : null}
@@ -102,7 +127,7 @@ export default function RestaurantDetailPage() {
                 <CardTitle>Daily Orders</CardTitle>
               </CardHeader>
               <CardContent>
-                <DailyOrdersChart data={daily} />
+                <DailyOrdersChart data={daily} comparisonData={compDaily ?? undefined} />
               </CardContent>
             </Card>
             <Card>
@@ -110,7 +135,7 @@ export default function RestaurantDetailPage() {
                 <CardTitle>Daily Revenue</CardTitle>
               </CardHeader>
               <CardContent>
-                <DailyRevenueChart data={daily} />
+                <DailyRevenueChart data={daily} comparisonData={compDaily ?? undefined} />
               </CardContent>
             </Card>
             <Card>
@@ -118,7 +143,7 @@ export default function RestaurantDetailPage() {
                 <CardTitle>Average Order Value</CardTitle>
               </CardHeader>
               <CardContent>
-                <AovChart data={daily} />
+                <AovChart data={daily} comparisonData={compDaily ?? undefined} />
               </CardContent>
             </Card>
             <Card>
@@ -126,7 +151,7 @@ export default function RestaurantDetailPage() {
                 <CardTitle>Peak Hour by Day</CardTitle>
               </CardHeader>
               <CardContent>
-                <PeakHourChart data={daily} />
+                <PeakHourChart data={daily} comparisonData={compDaily ?? undefined} />
               </CardContent>
             </Card>
           </div>
@@ -136,11 +161,17 @@ export default function RestaurantDetailPage() {
 
         {/* Daily Breakdown Table */}
         {daily && daily.length > 0 && (
-          <div>
+          <div className="mb-8">
             <h3 className="text-lg font-semibold text-slate-900 mb-3">Daily Breakdown</h3>
             <DailyBreakdownTable data={daily} />
           </div>
         )}
+
+        {/* Orders Table */}
+        <div>
+          <h3 className="text-lg font-semibold text-slate-900 mb-3">Orders</h3>
+          <OrdersTable restaurantId={id} startDate={startDate} endDate={endDate} />
+        </div>
       </main>
     </div>
   )

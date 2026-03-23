@@ -29,3 +29,17 @@ export interface TopDay {
   revenue: number
   aov: number
 }
+
+export interface OrderRow {
+  id: number
+  order_time: string
+  order_amount: number
+}
+
+export interface PaginatedResponse<T> {
+  data: T[]
+  total: number
+  per_page: number
+  current_page: number
+  last_page: number
+}
