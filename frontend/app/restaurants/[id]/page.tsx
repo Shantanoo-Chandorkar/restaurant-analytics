@@ -7,13 +7,14 @@ import { useDateRangeStore } from '@/store/useDateRangeStore'
 import { useComparisonStore } from '@/store/useComparisonStore'
 import { useRestaurantSummary } from '@/hooks/useRestaurantSummary'
 import { useAnalyticsDaily } from '@/hooks/useAnalyticsDaily'
+import { useTopDays } from '@/hooks/useTopDays'
 import { apiFetch } from '@/lib/api'
 import { formatCurrency } from '@/lib/format'
 import { getComparisonDates, formatDateRange } from '@/lib/comparison'
 import KpiCard from '@/components/KpiCard'
 import Header from '@/components/Header'
 import PageHeader from '@/components/PageHeader'
-import DailyBreakdownTable from '@/components/DailyBreakdownTable'
+import TopDaysTable from '@/components/TopDaysTable'
 import DailyOrdersChart from '@/components/charts/DailyOrdersChart'
 import DailyRevenueChart from '@/components/charts/DailyRevenueChart'
 import AovChart from '@/components/charts/AovChart'
@@ -22,11 +23,21 @@ import OrdersTable from '@/components/OrdersTable'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import type { Restaurant } from '@/lib/types'
 
+type ChartTab = 'orders' | 'revenue' | 'aov' | 'peak_hour'
+
+const CHART_TABS: { id: ChartTab; label: string }[] = [
+  { id: 'orders', label: 'Daily Orders' },
+  { id: 'revenue', label: 'Daily Revenue' },
+  { id: 'aov', label: 'Avg Order Value' },
+  { id: 'peak_hour', label: 'Peak Hour' },
+]
+
 export default function RestaurantDetailPage() {
   const params = useParams()
   const id = Number(params.id)
   const { startDate, endDate } = useDateRangeStore()
   const { type: comparisonType } = useComparisonStore()
+  const [activeTab, setActiveTab] = useState<ChartTab>('orders')
 
   const [restaurant, setRestaurant] = useState<Restaurant | null>(null)
   useEffect(() => {
@@ -36,6 +47,7 @@ export default function RestaurantDetailPage() {
 
   const { data: summary, loading: summaryLoading } = useRestaurantSummary(id, startDate, endDate)
   const { data: daily, loading: dailyLoading } = useAnalyticsDaily(id, startDate, endDate)
+  const { data: topDays } = useTopDays(id, startDate, endDate)
 
   const compDates = getComparisonDates(startDate, endDate, comparisonType)
   const { data: compSummary } = useRestaurantSummary(
@@ -115,43 +127,44 @@ export default function RestaurantDetailPage() {
 
         {/* Charts */}
         {dailyLoading ? (
-          <div className="flex flex-col gap-6 mb-8">
-            {[1, 2, 3, 4].map((i) => (
-              <div key={i} className="h-80 bg-slate-100 rounded-xl animate-pulse" />
-            ))}
-          </div>
+          <div className="h-80 bg-slate-100 rounded-xl animate-pulse mb-8" />
         ) : daily && daily.length > 0 ? (
-          <div className="flex flex-col gap-6 mb-8">
+          <div className="mb-8">
+            {/* Tab bar */}
+            <div className="flex gap-1 mb-4 border-b border-slate-200">
+              {CHART_TABS.map((tab) => (
+                <button
+                  key={tab.id}
+                  onClick={() => setActiveTab(tab.id)}
+                  className={`px-4 py-2 text-sm font-medium rounded-t-md transition-colors ${
+                    activeTab === tab.id
+                      ? 'bg-white border border-b-white border-slate-200 text-blue-600 -mb-px'
+                      : 'text-slate-500 hover:text-slate-700'
+                  }`}
+                >
+                  {tab.label}
+                </button>
+              ))}
+            </div>
+
+            {/* Active chart */}
             <Card>
               <CardHeader>
-                <CardTitle>Daily Orders</CardTitle>
+                <CardTitle>{CHART_TABS.find(t => t.id === activeTab)?.label}</CardTitle>
               </CardHeader>
               <CardContent>
-                <DailyOrdersChart data={daily} comparisonData={compDaily ?? undefined} />
-              </CardContent>
-            </Card>
-            <Card>
-              <CardHeader>
-                <CardTitle>Daily Revenue</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <DailyRevenueChart data={daily} comparisonData={compDaily ?? undefined} />
-              </CardContent>
-            </Card>
-            <Card>
-              <CardHeader>
-                <CardTitle>Average Order Value</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <AovChart data={daily} comparisonData={compDaily ?? undefined} />
-              </CardContent>
-            </Card>
-            <Card>
-              <CardHeader>
-                <CardTitle>Peak Hour by Day</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <PeakHourChart data={daily} comparisonData={compDaily ?? undefined} />
+                {activeTab === 'orders' && (
+                  <DailyOrdersChart data={daily} comparisonData={compDaily ?? undefined} />
+                )}
+                {activeTab === 'revenue' && (
+                  <DailyRevenueChart data={daily} comparisonData={compDaily ?? undefined} />
+                )}
+                {activeTab === 'aov' && (
+                  <AovChart data={daily} comparisonData={compDaily ?? undefined} />
+                )}
+                {activeTab === 'peak_hour' && (
+                  <PeakHourChart data={daily} comparisonData={compDaily ?? undefined} />
+                )}
               </CardContent>
             </Card>
           </div>
@@ -159,11 +172,11 @@ export default function RestaurantDetailPage() {
           <p className="text-sm text-slate-400 mb-8">No daily data for the selected date range.</p>
         ) : null}
 
-        {/* Daily Breakdown Table */}
-        {daily && daily.length > 0 && (
+        {/* Top Performing Days */}
+        {topDays && topDays.length > 0 && (
           <div className="mb-8">
-            <h3 className="text-lg font-semibold text-slate-900 mb-3">Daily Breakdown</h3>
-            <DailyBreakdownTable data={daily} />
+            <h3 className="text-lg font-semibold text-slate-900 mb-3">Top Performing Days</h3>
+            <TopDaysTable data={topDays} />
           </div>
         )}
 
