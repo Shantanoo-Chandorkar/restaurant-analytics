@@ -16,6 +16,14 @@ function Skeleton() {
   )
 }
 
+function EmptyState() {
+  return (
+    <div className="rounded-xl border border-dashed border-slate-200 bg-slate-50 py-10 text-center">
+      <p className="text-sm text-slate-400">No top performers for the selected date range.</p>
+    </div>
+  )
+}
+
 export default function TopPerformers() {
   const { startDate, endDate } = useDateRangeStore()
   const { type: comparisonType } = useComparisonStore()
@@ -30,23 +38,21 @@ export default function TopPerformers() {
   return (
     <section>
       <h2 className="text-xl font-bold text-slate-900 mb-4">Top Performers</h2>
+
       {loading && <Skeleton />}
-      {error && (
+      {!loading && error && (
         <p className="text-sm text-red-500">Failed to load top performers.</p>
       )}
-      {restaurants && (
+      {!loading && !error && restaurants && restaurants.length === 0 && <EmptyState />}
+      {!loading && !error && restaurants && restaurants.length > 0 && (
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
           {restaurants.map((restaurant, index) => (
-            <TopPerformerCard
-              key={restaurant.id}
-              restaurant={restaurant}
-              rank={index + 1}
-            />
+            <TopPerformerCard key={restaurant.id} restaurant={restaurant} rank={index + 1} />
           ))}
         </div>
       )}
 
-      {compDates && compRestaurants && compRestaurants.length > 0 && (
+      {compDates && (
         <div className="mt-8">
           <div className="flex items-center gap-3 mb-4">
             <div className="flex-1 h-px bg-slate-200" />
@@ -55,14 +61,12 @@ export default function TopPerformers() {
             </p>
             <div className="flex-1 h-px bg-slate-200" />
           </div>
-          {compLoading ? <Skeleton /> : (
+          {compLoading && <Skeleton />}
+          {!compLoading && compRestaurants && compRestaurants.length === 0 && <EmptyState />}
+          {!compLoading && compRestaurants && compRestaurants.length > 0 && (
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
               {compRestaurants.map((restaurant, index) => (
-                <TopPerformerCard
-                  key={restaurant.id}
-                  restaurant={restaurant}
-                  rank={index + 1}
-                />
+                <TopPerformerCard key={restaurant.id} restaurant={restaurant} rank={index + 1} />
               ))}
             </div>
           )}

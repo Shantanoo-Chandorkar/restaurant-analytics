@@ -18,7 +18,7 @@ export default function KpiCard({ icon, label, value, colorClass, bgClass, compa
       <CardContent className="pt-6">
         <div className="flex items-start gap-4">
           <div
-            className={`w-12 h-12 rounded-xl flex items-center justify-center text-2xl shrink-0 ${bgClass}`}
+            className={`w-12 h-12 rounded-xl flex items-center justify-center shrink-0 ${bgClass}`}
           >
             {icon}
           </div>

@@ -5,9 +5,9 @@ import { formatCurrencyShort } from '@/lib/format'
 import type { TopRestaurant } from '@/lib/types'
 
 const RANK_STYLES: Record<number, { badge: string; label: string }> = {
-  1: { badge: 'bg-yellow-400 text-yellow-900', label: '🥇 1st' },
-  2: { badge: 'bg-gray-300 text-gray-700', label: '🥈 2nd' },
-  3: { badge: 'bg-orange-400 text-orange-900', label: '🥉 3rd' },
+  1: { badge: 'bg-yellow-400 text-yellow-900', label: '#1' },
+  2: { badge: 'bg-gray-300 text-gray-700', label: '#2' },
+  3: { badge: 'bg-orange-400 text-orange-900', label: '#3' },
 }
 
 interface Props {
