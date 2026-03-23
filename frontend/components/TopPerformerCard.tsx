@@ -29,21 +29,21 @@ export default function TopPerformerCard({ restaurant, rank, startDate, endDate 
       </div>
 
       <div>
-        <p className="text-lg font-bold text-gray-900">{restaurant.name}</p>
-        <p className="text-sm text-gray-500 mt-0.5">
+        <p className="text-lg font-bold text-slate-900">{restaurant.name}</p>
+        <p className="text-sm text-slate-500 mt-0.5">
           {restaurant.cuisine} · {restaurant.location}
         </p>
       </div>
 
       <div className="flex gap-4 pt-1 border-t border-amber-200">
         <div>
-          <p className="text-xs text-gray-500">Revenue</p>
+          <p className="text-xs text-slate-500">Revenue</p>
           <p className="text-base font-bold text-green-700">
             {formatCurrencyShort(restaurant.total_revenue)}
           </p>
         </div>
         <div>
-          <p className="text-xs text-gray-500">Orders</p>
+          <p className="text-xs text-slate-500">Orders</p>
           <p className="text-base font-bold text-blue-700">
             {summary ? summary.orders : '—'}
           </p>

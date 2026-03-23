@@ -4,11 +4,13 @@ import { useMemo } from 'react'
 import { useDateRangeStore } from '@/store/useDateRangeStore'
 import { useFilterStore } from '@/store/useFilterStore'
 import { useRestaurants } from '@/hooks/useRestaurants'
+import { useRestaurantsMeta } from '@/hooks/useRestaurantsMeta'
+import { useDebounce } from '@/hooks/useDebounce'
 import RestaurantCard from './RestaurantCard'
 import { Input } from './ui/input'
 
 const selectClass =
-  'h-9 rounded-md border border-gray-300 bg-white px-3 py-1 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-gray-700'
+  'h-9 rounded-md border border-slate-200 bg-white px-3 py-1 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-slate-700'
 
 export default function RestaurantDirectory() {
   const { startDate, endDate } = useDateRangeStore()
@@ -25,26 +27,21 @@ export default function RestaurantDirectory() {
     setLocation,
   } = useFilterStore()
 
-  const { data: restaurants, isLoading, isError } = useRestaurants({
-    search,
+  const debouncedSearch = useDebounce(search, 350)
+
+  const { data: restaurants, loading, error } = useRestaurants({
+    search: debouncedSearch,
     sortBy,
     sortDirection,
     cuisine,
     location,
   })
 
-  const cuisines = useMemo(
-    () => Array.from(new Set(restaurants?.map((r) => r.cuisine) ?? [])).sort(),
-    [restaurants]
-  )
-  const locations = useMemo(
-    () => Array.from(new Set(restaurants?.map((r) => r.location) ?? [])).sort(),
-    [restaurants]
-  )
+  const { cuisines, locations } = useRestaurantsMeta()
 
   return (
     <section>
-      <h2 className="text-xl font-bold text-gray-900 mb-4">Restaurant Directory</h2>
+      <h2 className="text-xl font-bold text-slate-900 mb-4">Restaurant Directory</h2>
 
       {/* Filters */}
       <div className="flex flex-wrap gap-3 mb-6">
@@ -102,14 +99,14 @@ export default function RestaurantDirectory() {
       </div>
 
       {/* Grid */}
-      {isLoading && (
+      {loading && (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
           {[1, 2, 3, 4].map((i) => (
-            <div key={i} className="h-36 bg-white rounded-xl border border-gray-200 animate-pulse" />
+            <div key={i} className="h-36 bg-white rounded-xl border border-slate-200 animate-pulse" />
           ))}
         </div>
       )}
-      {isError && <p className="text-sm text-red-500">Failed to load restaurants.</p>}
+      {error && <p className="text-sm text-red-500">Failed to load restaurants.</p>}
       {restaurants && (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
           {restaurants.map((restaurant) => (
@@ -121,7 +118,7 @@ export default function RestaurantDirectory() {
             />
           ))}
           {restaurants.length === 0 && (
-            <p className="col-span-4 text-sm text-gray-400 py-8 text-center">
+            <p className="col-span-4 text-sm text-slate-400 py-8 text-center">
               No restaurants found.
             </p>
           )}

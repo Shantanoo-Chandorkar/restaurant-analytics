@@ -1,8 +1,8 @@
 'use client'
 
 import { useParams } from 'next/navigation'
+import { useState, useEffect } from 'react'
 import Link from 'next/link'
-import { useQuery } from '@tanstack/react-query'
 import { useDateRangeStore } from '@/store/useDateRangeStore'
 import { useRestaurantSummary } from '@/hooks/useRestaurantSummary'
 import { useAnalyticsDaily } from '@/hooks/useAnalyticsDaily'
@@ -23,14 +23,14 @@ export default function RestaurantDetailPage() {
   const id = Number(params.id)
   const { startDate, endDate } = useDateRangeStore()
 
-  const { data: restaurant } = useQuery({
-    queryKey: ['restaurants', id],
-    queryFn: () => apiFetch<Restaurant>(`/restaurants/${id}`),
-    enabled: !!id,
-  })
+  const [restaurant, setRestaurant] = useState<Restaurant | null>(null)
+  useEffect(() => {
+    if (!id) return
+    apiFetch<Restaurant>(`/restaurants/${id}`).then(setRestaurant).catch(() => null)
+  }, [id])
 
-  const { data: summary, isLoading: summaryLoading } = useRestaurantSummary(id, startDate, endDate)
-  const { data: daily, isLoading: dailyLoading } = useAnalyticsDaily(id, startDate, endDate)
+  const { data: summary, loading: summaryLoading } = useRestaurantSummary(id, startDate, endDate)
+  const { data: daily, loading: dailyLoading } = useAnalyticsDaily(id, startDate, endDate)
 
   return (
     <div className="min-h-screen">
@@ -45,11 +45,11 @@ export default function RestaurantDetailPage() {
           >
             ← Back to Dashboard
           </Link>
-          <h2 className="text-2xl font-bold text-gray-900 mt-2">
+          <h2 className="text-2xl font-bold text-slate-900 mt-2">
             {restaurant?.name ?? 'Restaurant Detail'}
           </h2>
           {restaurant && (
-            <p className="text-sm text-gray-500 mt-0.5">
+            <p className="text-sm text-slate-500 mt-0.5">
               {restaurant.cuisine} · {restaurant.location}
             </p>
           )}
@@ -59,11 +59,11 @@ export default function RestaurantDetailPage() {
         {summaryLoading ? (
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
             {[1, 2, 3].map((i) => (
-              <div key={i} className="h-24 bg-gray-100 rounded-xl animate-pulse" />
+              <div key={i} className="h-24 bg-slate-100 rounded-xl animate-pulse" />
             ))}
           </div>
         ) : summary ? (
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8">
             <KpiCard
               icon="📦"
               label="Total Orders"
@@ -90,13 +90,13 @@ export default function RestaurantDetailPage() {
 
         {/* Charts */}
         {dailyLoading ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
+          <div className="flex flex-col gap-6 mb-8">
             {[1, 2, 3, 4].map((i) => (
-              <div key={i} className="h-72 bg-gray-100 rounded-xl animate-pulse" />
+              <div key={i} className="h-80 bg-slate-100 rounded-xl animate-pulse" />
             ))}
           </div>
         ) : daily && daily.length > 0 ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
+          <div className="flex flex-col gap-6 mb-8">
             <Card>
               <CardHeader>
                 <CardTitle>Daily Orders</CardTitle>
@@ -131,13 +131,13 @@ export default function RestaurantDetailPage() {
             </Card>
           </div>
         ) : !dailyLoading ? (
-          <p className="text-sm text-gray-400 mb-8">No daily data for the selected date range.</p>
+          <p className="text-sm text-slate-400 mb-8">No daily data for the selected date range.</p>
         ) : null}
 
         {/* Daily Breakdown Table */}
         {daily && daily.length > 0 && (
           <div>
-            <h3 className="text-lg font-semibold text-gray-900 mb-3">Daily Breakdown</h3>
+            <h3 className="text-lg font-semibold text-slate-900 mb-3">Daily Breakdown</h3>
             <DailyBreakdownTable data={daily} />
           </div>
         )}
