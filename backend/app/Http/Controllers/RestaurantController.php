@@ -21,7 +21,7 @@ class RestaurantController extends Controller
      */
     public function index(Request $request)
     {
-        $filters = $request->only(['search', 'cuisine', 'location', 'sort_by', 'sort_direction']);
+        $filters = $request->only(['search', 'cuisine', 'location', 'sort_by', 'sort_direction', 'start_date', 'end_date']);
 
         return $this->success($this->restaurantService->getRestaurants($filters));
     }
