@@ -17,3 +17,9 @@ export function formatHour(hour: number | null): string {
   if (hour === null) return '—'
   return String(hour).padStart(2, '0') + ':00'
 }
+
+/** Format ISO date string as "Mon D" (local time) */
+export function fmtDate(dateStr: string): string {
+  const d = new Date(dateStr + 'T00:00:00')
+  return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
+}

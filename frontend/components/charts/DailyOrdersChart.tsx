@@ -11,6 +11,7 @@ import {
   ResponsiveContainer,
 } from 'recharts'
 import type { DailyRow } from '@/lib/types'
+import { fmtDate } from '@/lib/format'
 
 interface Props {
   data: DailyRow[]
@@ -21,6 +22,7 @@ export default function DailyOrdersChart({ data, comparisonData }: Props) {
   const merged = data.map((row, i) => ({
     ...row,
     comp_orders: comparisonData?.[i]?.orders ?? undefined,
+    comp_date: comparisonData?.[i]?.date,
   }))
 
   return (
@@ -30,13 +32,18 @@ export default function DailyOrdersChart({ data, comparisonData }: Props) {
         <XAxis dataKey="date" tick={{ fontSize: 11 }} />
         <YAxis tick={{ fontSize: 11 }} />
         <Tooltip
-          formatter={(v, name) => [Number(v), name === 'orders' ? 'Current' : 'Comparison']}
+          formatter={(v, name) => [Number(v), name === 'Current Period' ? 'Current' : 'Comparison']}
+          labelFormatter={(label, payload) => {
+            const compDate = payload?.[0]?.payload?.comp_date
+            if (compDate) return `${fmtDate(label)} vs ${fmtDate(compDate)}`
+            return fmtDate(label)
+          }}
           contentStyle={{ fontSize: 12, borderRadius: 8 }}
         />
         {comparisonData && <Legend />}
         <Bar dataKey="orders" name="Current Period" fill="#2563EB" radius={[4, 4, 0, 0]} />
         {comparisonData && (
-          <Bar dataKey="comp_orders" name="Comparison Period" fill="#BFDBFE" radius={[4, 4, 0, 0]} />
+          <Bar dataKey="comp_orders" name="Comparison Period" fill="#EA580C" radius={[4, 4, 0, 0]} />
         )}
       </BarChart>
     </ResponsiveContainer>

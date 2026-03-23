@@ -11,7 +11,7 @@ import {
   ResponsiveContainer,
 } from 'recharts'
 import type { DailyRow } from '@/lib/types'
-import { formatHour } from '@/lib/format'
+import { formatHour, fmtDate } from '@/lib/format'
 
 interface Props {
   data: DailyRow[]
@@ -23,6 +23,7 @@ export default function PeakHourChart({ data, comparisonData }: Props) {
     ...row,
     peak_hour: row.peak_hour ?? 0,
     comp_peak_hour: comparisonData?.[i]?.peak_hour ?? undefined,
+    comp_date: comparisonData?.[i]?.date,
   }))
 
   return (
@@ -36,13 +37,18 @@ export default function PeakHourChart({ data, comparisonData }: Props) {
           tick={{ fontSize: 11 }}
         />
         <Tooltip
-          formatter={(v, name) => [formatHour(Number(v)), name === 'peak_hour' ? 'Current' : 'Comparison']}
+          formatter={(v, name) => [formatHour(Number(v)), name === 'Current Period' ? 'Current' : 'Comparison']}
+          labelFormatter={(label, payload) => {
+            const compDate = payload?.[0]?.payload?.comp_date
+            if (compDate) return `${fmtDate(label)} vs ${fmtDate(compDate)}`
+            return fmtDate(label)
+          }}
           contentStyle={{ fontSize: 12, borderRadius: 8 }}
         />
         {comparisonData && <Legend />}
         <Bar dataKey="peak_hour" name="Current Period" fill="#B45309" radius={[4, 4, 0, 0]} />
         {comparisonData && (
-          <Bar dataKey="comp_peak_hour" name="Comparison Period" fill="#FDE68A" radius={[4, 4, 0, 0]} />
+          <Bar dataKey="comp_peak_hour" name="Comparison Period" fill="#EA580C" radius={[4, 4, 0, 0]} />
         )}
       </BarChart>
     </ResponsiveContainer>

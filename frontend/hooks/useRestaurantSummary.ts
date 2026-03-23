@@ -12,7 +12,10 @@ export function useRestaurantSummary(
   const [error, setError] = useState<Error | null>(null)
 
   useEffect(() => {
-    if (!restaurantId) return
+    if (!restaurantId) {
+      setData(null)
+      return
+    }
     let cancelled = false
     setLoading(true)
     apiFetch<Summary>(`/analytics/${restaurantId}/summary`, {

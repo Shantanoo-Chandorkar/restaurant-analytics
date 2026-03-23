@@ -11,7 +11,7 @@ import {
   ResponsiveContainer,
 } from 'recharts'
 import type { DailyRow } from '@/lib/types'
-import { formatCurrency } from '@/lib/format'
+import { formatCurrency, fmtDate } from '@/lib/format'
 
 interface Props {
   data: DailyRow[]
@@ -22,6 +22,7 @@ export default function DailyRevenueChart({ data, comparisonData }: Props) {
   const merged = data.map((row, i) => ({
     ...row,
     comp_revenue: comparisonData?.[i]?.revenue ?? undefined,
+    comp_date: comparisonData?.[i]?.date,
   }))
 
   return (
@@ -31,7 +32,12 @@ export default function DailyRevenueChart({ data, comparisonData }: Props) {
         <XAxis dataKey="date" tick={{ fontSize: 11 }} />
         <YAxis tick={{ fontSize: 11 }} />
         <Tooltip
-          formatter={(v, name) => [formatCurrency(Number(v)), name === 'revenue' ? 'Current' : 'Comparison']}
+          formatter={(v, name) => [formatCurrency(Number(v)), name === 'Current Period' ? 'Current' : 'Comparison']}
+          labelFormatter={(label, payload) => {
+            const compDate = payload?.[0]?.payload?.comp_date
+            if (compDate) return `${fmtDate(label)} vs ${fmtDate(compDate)}`
+            return fmtDate(label)
+          }}
           contentStyle={{ fontSize: 12, borderRadius: 8 }}
         />
         {comparisonData && <Legend />}
@@ -49,10 +55,10 @@ export default function DailyRevenueChart({ data, comparisonData }: Props) {
             type="monotone"
             dataKey="comp_revenue"
             name="Comparison Period"
-            stroke="#6EE7B7"
+            stroke="#EA580C"
             strokeWidth={2}
             strokeDasharray="5 5"
-            dot={{ r: 3, fill: '#6EE7B7' }}
+            dot={{ r: 3, fill: '#EA580C' }}
             activeDot={{ r: 5 }}
           />
         )}
