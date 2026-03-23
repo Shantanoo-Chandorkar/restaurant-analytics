@@ -22,11 +22,7 @@ class AnalyticsController extends Controller
         $startDate = $request->query('start_date', now()->subDays(7)->toDateString());
         $endDate   = $request->query('end_date', now()->toDateString());
 
-        return $this->success([
-            'revenue' => $this->analyticsService->revenueForDateRange($restaurantId, $startDate, $endDate),
-            'orders'  => $this->analyticsService->orderCountForDateRange($restaurantId, $startDate, $endDate),
-            'aov'     => $this->analyticsService->averageOrderValueForDateRange($restaurantId, $startDate, $endDate),
-        ]);
+        return $this->success($this->analyticsService->getSummary($restaurantId, $startDate, $endDate));
     }
 
     /**

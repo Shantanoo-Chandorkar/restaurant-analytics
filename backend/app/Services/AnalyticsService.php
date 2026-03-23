@@ -60,6 +60,32 @@ class AnalyticsService
     }
 
     /**
+     * Total revenue, order count, and AOV for a restaurant within a date range.
+     * Single query replaces the three separate calls. Cached with unified key.
+     * TTL: 15 min normally, 5 min during peak hours.
+     */
+    public function getSummary(int $restaurantId, string $startDate, string $endDate): array
+    {
+        return Cache::remember(
+            "analytics:summary:{$restaurantId}:{$startDate}:{$endDate}",
+            $this->summaryTtl(),
+            function () use ($restaurantId, $startDate, $endDate) {
+                $row = Restaurant::findOrFail($restaurantId)
+                    ->orders()
+                    ->whereBetween('order_time', [$startDate, $this->endOfDay($endDate)])
+                    ->selectRaw('COUNT(*) as orders, SUM(order_amount) as revenue, AVG(order_amount) as aov')
+                    ->first();
+
+                return [
+                    'orders'  => (int) ($row->orders ?? 0),
+                    'revenue' => (float) ($row->revenue ?? 0),
+                    'aov'     => (float) ($row->aov ?? 0),
+                ];
+            }
+        );
+    }
+
+    /**
      * Returns the hour (0-23) with the highest order volume for a restaurant on a given date.
      * Returns 0 if no orders found.
      * TTL: 30 min. Hour-level granularity makes 30 min staleness acceptable.
