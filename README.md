@@ -1,0 +1,138 @@
+# Restaurant Analytics
+
+**Author:** Shantanoo Chandorkar
+
+---
+
+## Description
+
+Restaurant Analytics is a full-stack dashboard for analysing restaurant performance data.
+
+- Analyse revenue, order volume, and average order value across restaurants
+- Filter and search restaurants by name, cuisine, and location
+- Visualise per-day breakdowns across 4 chart types (orders, revenue, AOV, peak hour)
+- Compare any date range against a previous period or previous year
+- Browse paginated order history per restaurant
+- Identify top-performing restaurants and top-performing days by revenue
+
+---
+
+## Tech Stack
+
+**Backend**
+- PHP 8.4 / Laravel 13
+- MySQL 8.0
+- Redis 7
+
+**Frontend**
+- Next.js 16 (App Router) / React 19 / TypeScript 5
+- Tailwind CSS 4
+- Recharts 3 (charts)
+- Zustand 5 (state management)
+- React DatePicker 9
+
+**Environment**
+- Docker + Docker Compose (4 services: backend, frontend, db, redis)
+
+---
+
+## Setup
+
+### Prerequisites
+- Docker and Docker Compose installed and running
+
+### Steps
+
+1. **Clone the repository**
+
+2. **Build the containers**
+   ```bash
+   docker-compose build
+   ```
+
+3. **Start all services**
+   ```bash
+   docker-compose up -d
+   ```
+
+4. **Generate the Laravel app key**
+   ```bash
+   docker exec restaurant_backend php artisan key:generate
+   ```
+   > The `docker-compose.yml` ships with `APP_KEY: ""`. This step writes the key into the running container's environment. After running it, restart the backend so the key takes effect:
+   ```bash
+   docker-compose restart backend
+   ```
+
+5. **Run migrations**
+   ```bash
+   docker exec restaurant_backend php artisan migrate
+   ```
+
+6. **Seed the database** (100 restaurants + 1 million orders)
+   ```bash
+   docker exec restaurant_backend php artisan db:seed
+   ```
+   > Seeding may take a few minutes.
+
+7. **Open the dashboard**
+   - Frontend: http://localhost:3000
+   - API: http://localhost:8000/api
+
+---
+
+## Troubleshooting
+
+**Backend container exits immediately**
+- `APP_KEY` is empty — run step 4 (`key:generate`) then restart the backend container.
+
+**Migrations fail with "Connection refused"**
+- MySQL may still be initialising. Wait for the healthcheck to pass, then re-run.
+- Check service status: `docker-compose ps` — the `db` service should show `healthy`.
+
+**Frontend shows API errors or blank data**
+- Confirm the backend is up: `curl http://localhost:8000/up`
+- Verify `NEXT_PUBLIC_API_URL` in `docker-compose.yml` matches the backend port.
+
+**Resetting the database**
+```bash
+docker-compose down -v   # drops the db_data volume
+docker-compose up -d     # restart, then repeat steps 4–6
+```
+
+**Viewing container logs**
+```bash
+docker-compose logs backend
+docker-compose logs frontend
+```
+
+---
+
+## Features
+
+**Restaurant Directory**
+Browse all restaurants in a searchable, sortable grid; filter by cuisine or location.
+
+**Global Date Range Picker**
+Select any date window; all KPIs, charts, and tables update to reflect the chosen range.
+
+**Period Comparison**
+Compare the selected range against the previous equivalent period or the same period last year; deltas shown as ▲/▼ percentages.
+
+**Top Performers**
+Ranked list of the top 3 restaurants by revenue for the active date range with comparison data.
+
+**Restaurant Detail — KPI Cards**
+Per-restaurant summary of total orders, total revenue, and average order value with optional comparison overlay.
+
+**Daily Charts (4 types)**
+Interactive bar/line charts for daily orders, daily revenue, daily AOV, and daily peak order hour; comparison period rendered as overlay.
+
+**Top Performing Days**
+Table of the 5 highest-revenue days for a restaurant within the selected range.
+
+**Paginated Order History**
+Scrollable, paginated table of all orders for a restaurant (up to 50 per page) with timestamps and amounts.
+
+**Smart Caching**
+Redis-backed query cache with TTLs tuned by data type; shorter TTL during meal-rush hours (11am–2pm, 6pm–9pm) so dashboard data stays fresh when it matters most.
