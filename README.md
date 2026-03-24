@@ -145,6 +145,17 @@ The repository ships with pre-generated seed files. If you want to regenerate th
    ```
    > If seeding fails midway, reset the database first (`docker-compose down -v`), bring services back up, and re-run from step 3 of the Setup guide before re-seeding.
 
+5. **Verify the counts** — confirm both tables have the expected number of rows:
+   ```bash
+   docker exec restaurant_backend php artisan tinker --execute="echo 'Restaurants: ' . \App\Models\Restaurant::count();"
+   docker exec restaurant_backend php artisan tinker --execute="echo 'Orders: ' . \App\Models\Order::count();"
+   ```
+   Expected output:
+   ```
+   Restaurants: 100
+   Orders: 1000000
+   ```
+
 ---
 
 ## Features
