@@ -10,7 +10,7 @@ import { useRestaurantDetail } from '@/hooks/useRestaurantDetail'
 import { useRestaurantSummary } from '@/hooks/useRestaurantSummary'
 import { useAnalyticsDaily } from '@/hooks/useAnalyticsDaily'
 import { useTopDays } from '@/hooks/useTopDays'
-import { formatCurrency } from '@/lib/format'
+import { formatCurrency, generateDateRange } from '@/lib/format'
 import { getComparisonDates } from '@/lib/comparison'
 import KpiCard from '@/components/KpiCard'
 import Header from '@/components/Header'
@@ -144,16 +144,16 @@ export default function RestaurantDetailPage() {
             </CardHeader>
             <CardContent>
               {activeTab === 'orders' && (
-                <DailyOrdersChart data={daily ?? []} comparisonData={compDaily ?? undefined} />
+                <DailyOrdersChart data={daily ?? generateDateRange(startDate, endDate)} comparisonData={compDaily ?? undefined} />
               )}
               {activeTab === 'revenue' && (
-                <DailyRevenueChart data={daily ?? []} comparisonData={compDaily ?? undefined} />
+                <DailyRevenueChart data={daily ?? generateDateRange(startDate, endDate)} comparisonData={compDaily ?? undefined} />
               )}
               {activeTab === 'aov' && (
-                <AovChart data={daily ?? []} comparisonData={compDaily ?? undefined} />
+                <AovChart data={daily ?? generateDateRange(startDate, endDate)} comparisonData={compDaily ?? undefined} />
               )}
               {activeTab === 'peak_hour' && (
-                <PeakHourChart data={daily ?? []} comparisonData={compDaily ?? undefined} />
+                <PeakHourChart data={daily ?? generateDateRange(startDate, endDate)} comparisonData={compDaily ?? undefined} />
               )}
             </CardContent>
           </Card>

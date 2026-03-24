@@ -1,8 +1,8 @@
 'use client'
 
 import {
-  BarChart,
-  Bar,
+  LineChart,
+  Line,
   XAxis,
   YAxis,
   CartesianGrid,
@@ -28,7 +28,7 @@ export default function PeakHourChart({ data, comparisonData }: Props) {
 
   return (
     <ResponsiveContainer width="100%" height={280}>
-      <BarChart data={merged} margin={{ top: 4, right: 16, left: -16, bottom: 0 }}>
+      <LineChart data={merged} margin={{ top: 4, right: 16, left: -16, bottom: 0 }}>
         <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
         <XAxis dataKey="date" tick={{ fontSize: 11 }} />
         <YAxis
@@ -46,11 +46,28 @@ export default function PeakHourChart({ data, comparisonData }: Props) {
           contentStyle={{ fontSize: 12, borderRadius: 8 }}
         />
         {comparisonData && <Legend />}
-        <Bar dataKey="peak_hour" name="Current Period" fill="#B45309" radius={[4, 4, 0, 0]} />
+        <Line
+          type="monotone"
+          dataKey="peak_hour"
+          name="Current Period"
+          stroke="#B45309"
+          strokeWidth={2}
+          dot={{ r: 3, fill: '#B45309' }}
+          activeDot={{ r: 5 }}
+        />
         {comparisonData && (
-          <Bar dataKey="comp_peak_hour" name="Comparison Period" fill="#EA580C" radius={[4, 4, 0, 0]} />
+          <Line
+            type="monotone"
+            dataKey="comp_peak_hour"
+            name="Comparison Period"
+            stroke="#EA580C"
+            strokeWidth={2}
+            strokeDasharray="5 5"
+            dot={{ r: 3, fill: '#EA580C' }}
+            activeDot={{ r: 5 }}
+          />
         )}
-      </BarChart>
+      </LineChart>
     </ResponsiveContainer>
   )
 }

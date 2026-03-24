@@ -23,3 +23,21 @@ export function fmtDate(dateStr: string): string {
   const d = new Date(dateStr + 'T00:00:00')
   return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
 }
+
+/** Generate a DailyRow skeleton for every day in [startDate, endDate] with zero values */
+export function generateDateRange(startDate: string, endDate: string): { date: string; orders: number; revenue: number; aov: number; peak_hour: null }[] {
+  const rows = []
+  const current = new Date(startDate + 'T00:00:00')
+  const end = new Date(endDate + 'T00:00:00')
+  while (current <= end) {
+    rows.push({
+      date: current.toISOString().split('T')[0],
+      orders: 0,
+      revenue: 0,
+      aov: 0,
+      peak_hour: null,
+    })
+    current.setDate(current.getDate() + 1)
+  }
+  return rows
+}
