@@ -17,6 +17,7 @@ class RestaurantService {
     public function getRestaurants(array $filters = []): array
     {
         $sortBy    = $this->validateSortBy($filters['sort_by'] ?? 'name');
+        $sortDir   = $this->validateSortDirection($filters['sort_direction'] ?? 'asc');
         $startDate = $filters['start_date'] ?? null;
         $endDate   = $filters['end_date'] ?? null;
 
@@ -25,7 +26,7 @@ class RestaurantService {
                 . ($filters['search'] ?? '') . ':'
                 . ($filters['cuisine'] ?? '') . ':'
                 . ($filters['location'] ?? '') . ':'
-                . $sortBy . ':' . ($filters['sort_direction'] ?? 'asc');
+                . $sortBy . ':' . $sortDir;
 
             return Cache::remember($cacheKey, 900, function () use ($filters, $sortBy, $startDate, $endDate) {
                 $endOfDay = $this->endOfDay($endDate);
@@ -40,7 +41,7 @@ class RestaurantService {
                     ->when($filters['cuisine'] ?? null, fn($q, $v) => $q->where('restaurants.cuisine', $v))
                     ->when($filters['location'] ?? null, fn($q, $v) => $q->where('restaurants.location', $v))
                     ->groupBy('restaurants.id')
-                    ->orderBy("restaurants.{$sortBy}", $filters['sort_direction'] ?? 'asc')
+                    ->orderBy("restaurants.{$sortBy}", $sortDir)
                     ->get()
                     ->map(fn($r) => array_merge($r->toArray(), [
                         'summary' => [
@@ -56,7 +57,7 @@ class RestaurantService {
         return Restaurant::when($filters['search'] ?? null, fn($q, $v) => $q->where('name', 'like', '%' . $v . '%'))
             ->when($filters['cuisine'] ?? null, fn($q, $v) => $q->where('cuisine', $v))
             ->when($filters['location'] ?? null, fn($q, $v) => $q->where('location', $v))
-            ->orderBy($sortBy, $filters['sort_direction'] ?? 'asc')
+            ->orderBy($sortBy, $sortDir)
             ->get()
             ->toArray();
     }
@@ -97,5 +98,10 @@ class RestaurantService {
     {
         $allowedSorts = ['name', 'cuisine', 'location'];
         return in_array($sortBy, $allowedSorts) ? $sortBy : 'name';
+    }
+
+    private function validateSortDirection(string $direction): string
+    {
+        return in_array(strtolower($direction), ['asc', 'desc']) ? strtolower($direction) : 'asc';
     }
 }

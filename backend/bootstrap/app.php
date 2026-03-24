@@ -17,10 +17,9 @@ return Application::configure(basePath: dirname(__DIR__))
     ->withExceptions(function (Exceptions $exceptions): void {
         // 404 — model not found (triggered by findOrFail())
         $exceptions->render(function (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
-            $ids   = implode(', ', $e->getIds());
             return response()->json([
                 'success' => false,
-                'message' => "The requested resource was not found {$ids}.",
+                'message' => 'Resource not found.',
                 'data'    => null,
             ], 404);
         });

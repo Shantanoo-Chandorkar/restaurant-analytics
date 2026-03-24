@@ -7,6 +7,8 @@ use App\Models\Restaurant;
 
 class Order extends Model
 {
+    protected $guarded = ['*'];
+
     public function restaurant() {
         return $this->belongsTo(Restaurant::class);
     }
