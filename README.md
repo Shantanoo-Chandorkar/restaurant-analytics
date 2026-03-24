@@ -145,7 +145,13 @@ The repository ships with pre-generated seed files. If you want to regenerate th
    ```
    > If seeding fails midway, reset the database first (`docker-compose down -v`), bring services back up, and re-run from step 3 of the Setup guide before re-seeding.
 
-5. **Verify the counts** — confirm both tables have the expected number of rows:
+5. **Clear the Redis cache** — `migrate:fresh` wipes MySQL but leaves Redis untouched. Any date ranges queried before the re-seed will still return stale cached results unless the cache is cleared:
+   ```bash
+   docker exec restaurant_backend php artisan cache:clear
+   ```
+   > Skip this and you may see old data (e.g. 4 restaurants instead of 100) for date ranges that were previously cached, while other ranges look correct.
+
+6. **Verify the counts** — confirm both tables have the expected number of rows:
    ```bash
    docker exec restaurant_backend php artisan tinker --execute="echo 'Restaurants: ' . \App\Models\Restaurant::count();"
    docker exec restaurant_backend php artisan tinker --execute="echo 'Orders: ' . \App\Models\Order::count();"
