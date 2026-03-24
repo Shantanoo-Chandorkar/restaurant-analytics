@@ -28,7 +28,7 @@ class RestaurantService {
                 . ($filters['location'] ?? '') . ':'
                 . $sortBy . ':' . $sortDir;
 
-            return Cache::remember($cacheKey, 900, function () use ($filters, $sortBy, $startDate, $endDate) {
+            return Cache::remember($cacheKey, 900, function () use ($filters, $sortBy, $sortDir, $startDate, $endDate) {
                 $endOfDay = $this->endOfDay($endDate);
 
                 return Restaurant::leftJoin('orders', function ($join) use ($startDate, $endOfDay) {
