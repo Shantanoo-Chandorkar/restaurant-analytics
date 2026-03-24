@@ -112,7 +112,7 @@ docker-compose logs frontend
 
 ---
 
-## Regenerating Seed Data
+## Handling Large Dataset
 
 The repository ships with pre-generated seed files. If you want to regenerate them (e.g. to change the date range or scale), follow these steps.
 
@@ -133,7 +133,12 @@ The repository ships with pre-generated seed files. If you want to regenerate th
    mv backend/database/seeders/data/million-orders.json backend/database/seeders/data/orders.json
    ```
 
-3. **Re-seed the database** — seed restaurants first, then orders with increased memory (1 million orders require ~4 GB to load and insert):
+3. **Clear existing data** — if the database already has restaurants or orders from a previous seed run, wipe the tables first to avoid primary key conflicts:
+   ```bash
+   docker exec restaurant_backend php artisan migrate:fresh
+   ```
+
+4. **Re-seed the database** — seed restaurants first, then orders with increased memory (1 million orders require ~4 GB to load and insert):
    ```bash
    docker exec restaurant_backend php artisan db:seed --class=RestaurantSeeder
    docker exec restaurant_backend php -d memory_limit=4G artisan db:seed --class=OrderSeeder
