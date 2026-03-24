@@ -53,11 +53,13 @@ Restaurant Analytics is a full-stack dashboard for analysing restaurant performa
    ```bash
    docker-compose build
    ```
+   > Build may take a few minutes.
 
 3. **Start all services**
    ```bash
    docker-compose up -d
    ```
+   > It may take a few minutes.
 
 4. **Generate the Laravel app key**
    ```bash
@@ -73,11 +75,10 @@ Restaurant Analytics is a full-stack dashboard for analysing restaurant performa
    docker exec restaurant_backend php artisan migrate
    ```
 
-6. **Seed the database** (100 restaurants + 1 million orders)
+6. **Seed the database**
    ```bash
    docker exec restaurant_backend php artisan db:seed
    ```
-   > Seeding may take a few minutes.
 
 7. **Open the dashboard**
    - Frontend: http://localhost:3000
@@ -188,7 +189,7 @@ Interactive bar/line charts for daily orders, daily revenue, daily AOV, and dail
 Table of the 5 highest-revenue days for a restaurant within the selected range.
 
 **Paginated Order History**
-Scrollable, paginated table of all orders for a restaurant (up to 50 per page) with timestamps and amounts.
+Paginated table of all orders for a restaurant (15 per page) with timestamps and amounts.
 
 **Smart Caching**
 Redis-backed query cache with TTLs tuned by data type; shorter TTL during meal-rush hours (11am–2pm, 6pm–9pm) so dashboard data stays fresh when it matters most.
