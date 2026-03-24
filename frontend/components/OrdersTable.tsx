@@ -34,11 +34,11 @@ export default function OrdersTable({ restaurantId, startDate, endDate }: Props)
           </thead>
           <tbody>
             {loading && (
-              Array.from({ length: 5 }).map((_, i) => (
+              Array.from({ length: 15 }).map((_, i) => (
                 <tr key={i} className="border-b border-slate-100">
-                  <td className="px-4 py-3"><div className="h-4 w-8 bg-slate-100 rounded animate-pulse" /></td>
-                  <td className="px-4 py-3"><div className="h-4 w-40 bg-slate-100 rounded animate-pulse" /></td>
-                  <td className="px-4 py-3 text-right"><div className="h-4 w-20 bg-slate-100 rounded animate-pulse ml-auto" /></td>
+                  <td className="px-4 py-3"><div className="h-5 w-8 bg-slate-100 rounded animate-pulse" /></td>
+                  <td className="px-4 py-3"><div className="h-5 w-40 bg-slate-100 rounded animate-pulse" /></td>
+                  <td className="px-4 py-3 text-right"><div className="h-5 w-20 bg-slate-100 rounded animate-pulse ml-auto" /></td>
                 </tr>
               ))
             )}

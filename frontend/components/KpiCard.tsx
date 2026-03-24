@@ -8,9 +8,10 @@ interface KpiCardProps {
   colorClass: string
   bgClass: string
   comparison?: { value: string; delta: string }
+  loading?: boolean
 }
 
-export default function KpiCard({ icon, label, value, colorClass, bgClass, comparison }: KpiCardProps) {
+export default function KpiCard({ icon, label, value, colorClass, bgClass, comparison, loading }: KpiCardProps) {
   const isPositive = comparison?.delta.startsWith('▲')
 
   return (
@@ -24,14 +25,23 @@ export default function KpiCard({ icon, label, value, colorClass, bgClass, compa
           </div>
           <div className="flex-1">
             <p className="text-sm text-slate-500 font-medium">{label}</p>
-            <p className={`text-2xl font-bold mt-0.5 ${colorClass}`}>{value}</p>
-            {comparison && (
-              <div className="flex items-center gap-2 mt-1">
-                <span className="text-xs text-slate-400">{comparison.value}</span>
-                <span className={`text-xs font-semibold ${isPositive ? 'text-emerald-600' : 'text-red-500'}`}>
-                  {comparison.delta}
-                </span>
-              </div>
+            {loading ? (
+              <>
+                <div className="h-7 w-24 bg-slate-100 rounded animate-pulse mt-0.5" />
+                <div className="h-4 w-32 bg-slate-100 rounded animate-pulse mt-1" />
+              </>
+            ) : (
+              <>
+                <p className={`text-2xl font-bold mt-0.5 ${colorClass}`}>{value}</p>
+                {comparison && (
+                  <div className="flex items-center gap-2 mt-1">
+                    <span className="text-xs text-slate-400">{comparison.value}</span>
+                    <span className={`text-xs font-semibold ${isPositive ? 'text-emerald-600' : 'text-red-500'}`}>
+                      {comparison.delta}
+                    </span>
+                  </div>
+                )}
+              </>
             )}
           </div>
         </div>

@@ -85,40 +85,35 @@ export default function RestaurantDetailPage() {
         <PageHeader title={restaurant?.name ?? 'Restaurant Detail'} />
 
         {/* KPI Cards */}
-        {detailLoading ? (
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8">
-            {[1, 2, 3].map((i) => (
-              <div key={i} className="h-24 bg-slate-100 rounded-xl animate-pulse" />
-            ))}
-          </div>
-        ) : summary ? (
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8">
-            <KpiCard
-              icon={<CubeIcon className="w-6 h-6 text-blue-600" />}
-              label="Total Orders"
-              value={String(summary.orders)}
-              colorClass="text-blue-600"
-              bgClass="bg-blue-50"
-              comparison={compSummary ? { value: String(compSummary.orders), delta: delta(summary.orders, compSummary.orders) } : undefined}
-            />
-            <KpiCard
-              icon={<CurrencyDollarIcon className="w-6 h-6 text-green-600" />}
-              label="Total Revenue"
-              value={formatCurrency(summary.revenue)}
-              colorClass="text-green-600"
-              bgClass="bg-green-50"
-              comparison={compSummary ? { value: formatCurrency(compSummary.revenue), delta: delta(summary.revenue, compSummary.revenue) } : undefined}
-            />
-            <KpiCard
-              icon={<ChartBarIcon className="w-6 h-6 text-purple-600" />}
-              label="Avg Order Value"
-              value={formatCurrency(summary.aov)}
-              colorClass="text-purple-600"
-              bgClass="bg-purple-50"
-              comparison={compSummary ? { value: formatCurrency(compSummary.aov), delta: delta(summary.aov, compSummary.aov) } : undefined}
-            />
-          </div>
-        ) : null}
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8">
+          <KpiCard
+            icon={<CubeIcon className="w-6 h-6 text-blue-600" />}
+            label="Total Orders"
+            value={String(summary?.orders ?? 0)}
+            colorClass="text-blue-600"
+            bgClass="bg-blue-50"
+            loading={detailLoading}
+            comparison={compSummary && summary ? { value: String(compSummary.orders), delta: delta(summary.orders, compSummary.orders) } : undefined}
+          />
+          <KpiCard
+            icon={<CurrencyDollarIcon className="w-6 h-6 text-green-600" />}
+            label="Total Revenue"
+            value={formatCurrency(summary?.revenue ?? 0)}
+            colorClass="text-green-600"
+            bgClass="bg-green-50"
+            loading={detailLoading}
+            comparison={compSummary && summary ? { value: formatCurrency(compSummary.revenue), delta: delta(summary.revenue, compSummary.revenue) } : undefined}
+          />
+          <KpiCard
+            icon={<ChartBarIcon className="w-6 h-6 text-purple-600" />}
+            label="Avg Order Value"
+            value={formatCurrency(summary?.aov ?? 0)}
+            colorClass="text-purple-600"
+            bgClass="bg-purple-50"
+            loading={detailLoading}
+            comparison={compSummary && summary ? { value: formatCurrency(compSummary.aov), delta: delta(summary.aov, compSummary.aov) } : undefined}
+          />
+        </div>
 
         {/* Charts — always rendered; empty axes when no data */}
         <div className="mb-8">
