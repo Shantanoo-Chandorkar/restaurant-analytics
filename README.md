@@ -36,6 +36,10 @@ Restaurant Analytics is a full-stack dashboard for analysing restaurant performa
 
 ---
 
+> **Note on committed environment files:** This project intentionally commits environment variables and configuration files (e.g. `.env`, `docker-compose.yml` with credentials) to the repository. This is a deliberate decision made because this is an assignment project intended for straightforward evaluation. In a production environment, these files would never be committed to version control.
+
+---
+
 ## Setup
 
 ### Prerequisites
@@ -108,6 +112,36 @@ docker-compose logs frontend
 
 ---
 
+## Regenerating Seed Data
+
+The repository ships with pre-generated seed files. If you want to regenerate them (e.g. to change the date range or scale), follow these steps.
+
+1. **Generate the JSON files** — run from the project root:
+   ```bash
+   php scripts/generate_seed_data.php
+   ```
+   This creates two files inside `backend/database/seeders/data/`:
+   - `hundred-restaurants.json`
+   - `million-orders.json`
+
+2. **Swap the files** — rename the existing files as a backup, then rename the newly generated ones to the names the seeders expect:
+   ```bash
+   mv backend/database/seeders/data/restaurants.json backend/database/seeders/data/restaurants-old.json
+   mv backend/database/seeders/data/orders.json backend/database/seeders/data/orders-old.json
+
+   mv backend/database/seeders/data/hundred-restaurants.json backend/database/seeders/data/restaurants.json
+   mv backend/database/seeders/data/million-orders.json backend/database/seeders/data/orders.json
+   ```
+
+3. **Re-seed the database** — seed restaurants first, then orders with increased memory (1 million orders require ~4 GB to load and insert):
+   ```bash
+   docker exec restaurant_backend php artisan db:seed --class=RestaurantSeeder
+   docker exec restaurant_backend php -d memory_limit=4G artisan db:seed --class=OrderSeeder
+   ```
+   > If seeding fails midway, reset the database first (`docker-compose down -v`), bring services back up, and re-run from step 3 of the Setup guide before re-seeding.
+
+---
+
 ## Features
 
 **Restaurant Directory**
@@ -136,3 +170,6 @@ Scrollable, paginated table of all orders for a restaurant (up to 50 per page) w
 
 **Smart Caching**
 Redis-backed query cache with TTLs tuned by data type; shorter TTL during meal-rush hours (11am–2pm, 6pm–9pm) so dashboard data stays fresh when it matters most.
+
+**Large Dataset Performance**
+Handles 100 restaurants and 1 million orders without degradation; paginated queries, indexed foreign keys, and Redis caching ensure fast response times at scale.
