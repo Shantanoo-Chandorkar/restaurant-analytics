@@ -9,7 +9,7 @@ export async function apiFetch<T>(
     Object.entries(params).forEach(([k, v]) => url.searchParams.set(k, v))
   }
   const res = await fetch(url.toString())
-  if (!res.ok) throw new Error(`API error ${res.status}: ${res.statusText}`)
-  const json = await res.json()
+  const json = await res.json().catch(() => null)
+  if (!res.ok) throw new Error(json?.message ?? `API error ${res.status}: ${res.statusText}`)
   return json.data as T
 }

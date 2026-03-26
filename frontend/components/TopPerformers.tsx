@@ -41,7 +41,7 @@ export default function TopPerformers() {
 
       {loading && <Skeleton />}
       {!loading && error && (
-        <p className="text-sm text-red-500">Failed to load top performers.</p>
+        <p className="text-sm text-red-500">{error.message}</p>
       )}
       {!loading && !error && restaurants && restaurants.length === 0 && <EmptyState />}
       {!loading && !error && restaurants && restaurants.length > 0 && (
