@@ -2,7 +2,9 @@
 
 import { useState, useEffect } from 'react'
 import { useOrders } from '@/hooks/useOrders'
+import { useDebounce } from '@/hooks/useDebounce'
 import { formatCurrency } from '@/lib/format'
+import OrderFilterPanel from '@/components/OrderFilterPanel'
 
 interface Props {
   restaurantId: number
@@ -12,17 +14,62 @@ interface Props {
 
 export default function OrdersTable({ restaurantId, startDate, endDate }: Props) {
   const [page, setPage] = useState(1)
+  const [minAmount, setMinAmount] = useState(100)
+  const [maxAmount, setMaxAmount] = useState(10000)
+  const [minHour, setMinHour] = useState(0)
+  const [maxHour, setMaxHour] = useState(23)
+  const [showFilter, setShowFilter] = useState(false)
 
-  // Reset to page 1 when date range changes
-  useEffect(() => { setPage(1) }, [startDate, endDate])
+  const debouncedMinAmount = useDebounce(minAmount, 400)
+  const debouncedMaxAmount = useDebounce(maxAmount, 400)
+  const debouncedMinHour   = useDebounce(minHour, 400)
+  const debouncedMaxHour   = useDebounce(maxHour, 400)
 
-  const { data, loading, error } = useOrders(restaurantId, startDate, endDate, page)
+  // Reset to page 1 when date range or debounced filters change
+  useEffect(() => { setPage(1) }, [startDate, endDate, debouncedMinAmount, debouncedMaxAmount, debouncedMinHour, debouncedMaxHour])
+
+  const { data, loading, error } = useOrders(
+    restaurantId, startDate, endDate, page,
+    15, debouncedMinAmount, debouncedMaxAmount, debouncedMinHour, debouncedMaxHour
+  )
+
+  const isFiltered = debouncedMinAmount !== 100 || debouncedMaxAmount !== 10000 || debouncedMinHour !== 0 || debouncedMaxHour !== 23
 
   const from = data ? (data.current_page - 1) * data.per_page + 1 : 0
   const to = data ? Math.min(data.current_page * data.per_page, data.total) : 0
 
   return (
-    <div className="bg-white rounded-xl border border-slate-200 shadow-[0_1px_3px_rgba(0,0,0,0.08)] overflow-hidden">
+    <div>
+      <div className="flex items-center justify-between mb-3">
+        <h3 className="text-lg font-semibold text-slate-900">Orders</h3>
+        <div className="relative">
+          <button
+            onClick={() => setShowFilter(v => !v)}
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium rounded-lg border border-slate-200 bg-white hover:bg-slate-50 text-slate-700"
+          >
+            Filter
+            {isFiltered && (
+              <span className="w-2 h-2 rounded-full bg-blue-500 inline-block" />
+            )}
+          </button>
+          {showFilter && (
+            <OrderFilterPanel
+              minAmount={minAmount}
+              maxAmount={maxAmount}
+              minHour={minHour}
+              maxHour={maxHour}
+              onChange={f => {
+                setMinAmount(f.minAmount)
+                setMaxAmount(f.maxAmount)
+                setMinHour(f.minHour)
+                setMaxHour(f.maxHour)
+              }}
+              onClose={() => setShowFilter(false)}
+            />
+          )}
+        </div>
+      </div>
+      <div className="bg-white rounded-xl border border-slate-200 shadow-[0_1px_3px_rgba(0,0,0,0.08)] overflow-hidden">
       <div className="overflow-x-auto">
         <table className="w-full text-sm">
           <thead>
@@ -93,6 +140,7 @@ export default function OrdersTable({ restaurantId, startDate, endDate }: Props)
           </div>
         </div>
       )}
+      </div>
     </div>
   )
 }

@@ -77,9 +77,14 @@ class AnalyticsController extends Controller
         $endDate   = $request->query('end_date', now()->toDateString());
         $page      = max(1, (int) $request->query('page', 1));
         $perPage   = min(50, max(1, (int) $request->query('per_page', 15)));
+        $minAmount = max(100,   (int) $request->query('min_amount', 100));
+        $maxAmount = min(10000, (int) $request->query('max_amount', 10000));
+        $minHour   = max(0,     (int) $request->query('min_hour',   0));
+        $maxHour   = min(23,    (int) $request->query('max_hour',   23));
 
         return $this->success($this->analyticsService->getPaginatedOrders(
-            $restaurantId, $startDate, $endDate, $page, $perPage
+            $restaurantId, $startDate, $endDate, $page, $perPage,
+            $minAmount, $maxAmount, $minHour, $maxHour
         ));
     }
 

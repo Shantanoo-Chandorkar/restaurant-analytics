@@ -279,13 +279,18 @@ class AnalyticsService
      * TTL: 30 min. Orders are immutable once placed.
      */
     public function getPaginatedOrders(
-        int $restaurantId, string $startDate, string $endDate, int $page, int $perPage
+        int $restaurantId, string $startDate, string $endDate, int $page, int $perPage,
+        int $minAmount = 100, int $maxAmount = 10000, int $minHour = 0, int $maxHour = 23
     ): array {
-        $cacheKey = "analytics:orders:{$restaurantId}:{$startDate}:{$endDate}:{$page}:{$perPage}";
-        return Cache::remember($cacheKey, 1800, function () use ($restaurantId, $startDate, $endDate, $page, $perPage) {
+        $cacheKey = "analytics:orders:{$restaurantId}:{$startDate}:{$endDate}:{$page}:{$perPage}:{$minAmount}:{$maxAmount}:{$minHour}:{$maxHour}";
+        return Cache::remember($cacheKey, 1800, function () use ($restaurantId, $startDate, $endDate, $page, $perPage, $minAmount, $maxAmount, $minHour, $maxHour) {
             $result = DB::table('orders')
                 ->where('restaurant_id', $restaurantId)
                 ->whereBetween('order_time', [$startDate, $this->endOfDay($endDate)])
+                ->where('order_amount', '>=', $minAmount)
+                ->where('order_amount', '<=', $maxAmount)
+                ->whereRaw('HOUR(order_time) >= ?', [$minHour])
+                ->whereRaw('HOUR(order_time) < ?', [$maxHour])
                 ->orderByDesc('order_time')
                 ->select('id', 'order_time', 'order_amount')
                 ->paginate($perPage, ['*'], 'page', $page);

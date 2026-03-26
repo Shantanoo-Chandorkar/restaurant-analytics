@@ -163,10 +163,7 @@ export default function RestaurantDetailPage() {
         )}
 
         {/* Orders Table */}
-        <div>
-          <h3 className="text-lg font-semibold text-slate-900 mb-3">Orders</h3>
-          <OrdersTable restaurantId={id} startDate={startDate} endDate={endDate} />
-        </div>
+        <OrdersTable restaurantId={id} startDate={startDate} endDate={endDate} />
       </main>
     </div>
   )
