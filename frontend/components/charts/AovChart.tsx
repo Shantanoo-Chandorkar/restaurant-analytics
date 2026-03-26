@@ -35,7 +35,7 @@ export default function AovChart({ data, comparisonData }: Props) {
           formatter={(v, name) => [formatCurrency(Number(v)), name === 'Current Period' ? 'Current' : 'Comparison']}
           labelFormatter={(label, payload) => {
             const compDate = payload?.[0]?.payload?.comp_date
-            if (compDate) return `${fmtDate(label)} vs ${fmtDate(compDate)}`
+            if (compDate) return `${fmtDate(compDate)} vs ${fmtDate(label)}`
             return fmtDate(label)
           }}
           contentStyle={{ fontSize: 12, borderRadius: 8 }}
