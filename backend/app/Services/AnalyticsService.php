@@ -5,9 +5,11 @@ namespace App\Services;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Cache;
 use App\Models\Restaurant;
+use App\Traits\FallibleCache;
 
 class AnalyticsService
 {
+    use FallibleCache;
 
     // ============ Total Analytics Start =============
 
@@ -17,7 +19,7 @@ class AnalyticsService
      */
     public function revenueForDateRange(int $restaurantId, string $startDate, string $endDate): float
     {
-        return Cache::remember(
+        return $this->safeRemember(
             "analytics:revenue:{$restaurantId}:{$startDate}:{$endDate}",
             $this->summaryTtl(),
             fn() => Restaurant::findOrFail($restaurantId)
@@ -33,7 +35,7 @@ class AnalyticsService
      */
     public function orderCountForDateRange(int $restaurantId, string $startDate, string $endDate): int
     {
-        return Cache::remember(
+        return $this->safeRemember(
             "analytics:order_count:{$restaurantId}:{$startDate}:{$endDate}",
             $this->summaryTtl(),
             fn() => Restaurant::findOrFail($restaurantId)
@@ -49,7 +51,7 @@ class AnalyticsService
      */
     public function averageOrderValueForDateRange(int $restaurantId, string $startDate, string $endDate): float
     {
-        return Cache::remember(
+        return $this->safeRemember(
             "analytics:aov:{$restaurantId}:{$startDate}:{$endDate}",
             $this->summaryTtl(),
             fn() => Restaurant::findOrFail($restaurantId)
@@ -66,7 +68,7 @@ class AnalyticsService
      */
     public function getSummary(int $restaurantId, string $startDate, string $endDate): array
     {
-        return Cache::remember(
+        return $this->safeRemember(
             "analytics:summary:{$restaurantId}:{$startDate}:{$endDate}",
             $this->summaryTtl(),
             function () use ($restaurantId, $startDate, $endDate) {
@@ -92,7 +94,7 @@ class AnalyticsService
      */
     public function getPeakOrderHour(int $restaurantId, string $date): int
     {
-        return Cache::remember(
+        return $this->safeRemember(
             "analytics:peak_hour:{$restaurantId}:{$date}",
             1800,
             function () use ($restaurantId, $date) {
@@ -226,7 +228,7 @@ class AnalyticsService
      */
     public function getDailyBreakdown(int $restaurantId, string $startDate, string $endDate): array
     {
-        return Cache::remember(
+        return $this->safeRemember(
             "analytics:daily_breakdown:{$restaurantId}:{$startDate}:{$endDate}",
             1800,
             function () use ($restaurantId, $startDate, $endDate) {
@@ -259,7 +261,7 @@ class AnalyticsService
      */
     public function topPerformingDays(int $restaurantId, string $startDate, string $endDate, int $limit = 5): array
     {
-        return Cache::remember(
+        return $this->safeRemember(
             "analytics:top_days:{$restaurantId}:{$startDate}:{$endDate}:{$limit}",
             3600,
             fn() => DB::table('orders')
@@ -283,7 +285,7 @@ class AnalyticsService
         int $minAmount = 100, int $maxAmount = 10000, int $minHour = 0, int $maxHour = 23
     ): array {
         $cacheKey = "analytics:orders:{$restaurantId}:{$startDate}:{$endDate}:{$page}:{$perPage}:{$minAmount}:{$maxAmount}:{$minHour}:{$maxHour}";
-        return Cache::remember($cacheKey, 1800, function () use ($restaurantId, $startDate, $endDate, $page, $perPage, $minAmount, $maxAmount, $minHour, $maxHour) {
+        return $this->safeRemember($cacheKey, 1800, function () use ($restaurantId, $startDate, $endDate, $page, $perPage, $minAmount, $maxAmount, $minHour, $maxHour) {
             $result = DB::table('orders')
                 ->where('restaurant_id', $restaurantId)
                 ->whereBetween('order_time', [$startDate, $this->endOfDay($endDate)])

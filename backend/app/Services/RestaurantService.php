@@ -5,8 +5,10 @@ namespace App\Services;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Cache;
 use App\Models\Restaurant;
+use App\Traits\FallibleCache;
 
 class RestaurantService {
+    use FallibleCache;
 
     /**
      * Returns all restaurants with optional search, sort, and filters.
@@ -28,7 +30,7 @@ class RestaurantService {
                 . ($filters['location'] ?? '') . ':'
                 . $sortBy . ':' . $sortDir;
 
-            return Cache::remember($cacheKey, 900, function () use ($filters, $sortBy, $sortDir, $startDate, $endDate) {
+            return $this->safeRemember($cacheKey, 900, function () use ($filters, $sortBy, $sortDir, $startDate, $endDate) {
                 $endOfDay = $this->endOfDay($endDate);
 
                 $sub = DB::table('orders')
@@ -72,7 +74,7 @@ class RestaurantService {
      */
     public function getTopByRevenue(string $startDate, string $endDate, int $limit = 3): array
     {
-        return Cache::remember(
+        return $this->safeRemember(
             "restaurants:top:{$startDate}:{$endDate}:{$limit}",
             3600,
             fn() => Restaurant::join('orders', 'restaurants.id', '=', 'orders.restaurant_id')
