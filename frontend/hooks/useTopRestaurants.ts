@@ -9,6 +9,8 @@ export function useTopRestaurants(startDate: string, endDate: string, limit = 3)
 
   useEffect(() => {
     let cancelled = false
+    setData(null)
+    setError(null)
     setLoading(true)
     apiFetch<TopRestaurant[]>('/restaurants/top', {
       start_date: startDate,

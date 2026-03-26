@@ -230,25 +230,25 @@ class AnalyticsService
             "analytics:daily_breakdown:{$restaurantId}:{$startDate}:{$endDate}",
             1800,
             function () use ($restaurantId, $startDate, $endDate) {
-                $orders   = $this->ordersPerDay($restaurantId, $startDate, $endDate);
-                $revenue  = $this->revenuePerDay($restaurantId, $startDate, $endDate);
-                $aov      = $this->aovPerDay($restaurantId, $startDate, $endDate);
-                $peakHour = $this->peakHourPerDay($restaurantId, $startDate, $endDate);
+                $metrics = DB::table('orders')
+                    ->selectRaw('DATE(order_time) as date, COUNT(*) as orders, SUM(order_amount) as revenue, AVG(order_amount) as aov')
+                    ->where('restaurant_id', $restaurantId)
+                    ->whereBetween('order_time', [$startDate, $this->endOfDay($endDate)])
+                    ->groupBy('date')
+                    ->orderBy('date')
+                    ->get()
+                    ->keyBy('date');
 
-                $result = [];
+                $peakHours = collect($this->peakHourPerDay($restaurantId, $startDate, $endDate))
+                    ->keyBy('date');
 
-                foreach ($orders as $i => $order) {
-                    $date = $order->date;
-                    $result[$date] = [
-                        'date'      => $date,
-                        'orders'    => $order->value,
-                        'revenue'   => $revenue[$i]->value ?? 0,
-                        'aov'       => $aov[$i]->value ?? 0,
-                        'peak_hour' => $peakHour[$i]['value'] ?? null,
-                    ];
-                }
-
-                return array_values($result);
+                return $metrics->map(fn($row, $date) => [
+                    'date'      => $date,
+                    'orders'    => (int) $row->orders,
+                    'revenue'   => (float) $row->revenue,
+                    'aov'       => (float) $row->aov,
+                    'peak_hour' => $peakHours[$date]['value'] ?? null,
+                ])->values()->toArray();
             }
         );
     }

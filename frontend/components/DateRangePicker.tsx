@@ -30,8 +30,10 @@ export default function DateRangePicker() {
     const [s, e] = dates
     setLocalStart(s)
     setLocalEnd(e)
-    if (s) setStartDate(toDateString(s))
-    if (e) setEndDate(toDateString(e))
+    if (s && e) {
+      setStartDate(toDateString(s))
+      setEndDate(toDateString(e))
+    }
   }
 
   return (

@@ -2,7 +2,7 @@
 
 namespace App\Http\Controllers;
 
-use Illuminate\Http\Request;
+use App\Http\Requests\AnalyticsRequest;
 use App\Services\RestaurantService;
 use App\Services\AnalyticsService;
 use App\Models\Restaurant;
@@ -23,7 +23,7 @@ class RestaurantController extends Controller
      * Returns all restaurants with optional search, sort, and filter.
      * Query params: search, cuisine, location, sort_by, sort_direction
      */
-    public function index(Request $request)
+    public function index(AnalyticsRequest $request)
     {
         $filters = $request->only(['search', 'cuisine', 'location', 'sort_by', 'sort_direction', 'start_date', 'end_date']);
 
@@ -35,7 +35,7 @@ class RestaurantController extends Controller
      * Returns top N restaurants by revenue for a date range.
      * Query params: start_date, end_date, limit (default 3)
      */
-    public function top(Request $request)
+    public function top(AnalyticsRequest $request)
     {
         $startDate = $request->query('start_date', now()->subDays(30)->toDateString());
         $endDate   = $request->query('end_date', now()->toDateString());
@@ -50,7 +50,7 @@ class RestaurantController extends Controller
      * When start_date and end_date are provided, also embeds a summary key.
      * Throws ModelNotFoundException (→ 404) if not found.
      */
-    public function show(Request $request, string $id)
+    public function show(AnalyticsRequest $request, string $id)
     {
         $restaurant = Restaurant::findOrFail($id);
 

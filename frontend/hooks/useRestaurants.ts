@@ -20,6 +20,7 @@ export function useRestaurants(filters: RestaurantFilters = {}) {
   useEffect(() => {
     let cancelled = false
     setData(null)
+    setError(null)
     setLoading(true)
     const params: Record<string, string> = {}
     if (filters.search) params.search = filters.search

@@ -2,7 +2,7 @@
 
 namespace App\Http\Controllers;
 
-use Illuminate\Http\Request;
+use App\Http\Requests\AnalyticsRequest;
 use App\Services\AnalyticsService;
 use App\Traits\ApiResponse;
 
@@ -17,7 +17,7 @@ class AnalyticsController extends Controller
      * Returns total revenue, order count, and AOV for a date range.
      * Query params: start_date, end_date (default: last 7 days)
      */
-    public function summary(Request $request, int $restaurantId)
+    public function summary(AnalyticsRequest $request, int $restaurantId)
     {
         $startDate = $request->query('start_date', now()->subDays(7)->toDateString());
         $endDate   = $request->query('end_date', now()->toDateString());
@@ -30,7 +30,7 @@ class AnalyticsController extends Controller
      * Returns per-day breakdown of orders, revenue, AOV, and peak hour.
      * Query params: start_date, end_date (default: last 7 days)
      */
-    public function daily(Request $request, int $restaurantId)
+    public function daily(AnalyticsRequest $request, int $restaurantId)
     {
         $startDate = $request->query('start_date', now()->subDays(7)->toDateString());
         $endDate   = $request->query('end_date', now()->toDateString());
@@ -43,7 +43,7 @@ class AnalyticsController extends Controller
      * Returns the top N performing days by revenue.
      * Query params: start_date, end_date, limit (default 5)
      */
-    public function topDays(Request $request, int $restaurantId)
+    public function topDays(AnalyticsRequest $request, int $restaurantId)
     {
         $startDate = $request->query('start_date', now()->subDays(30)->toDateString());
         $endDate   = $request->query('end_date', now()->toDateString());
@@ -57,7 +57,7 @@ class AnalyticsController extends Controller
      * Returns the peak order hour (0-23) for a specific date.
      * Query params: date (default: today)
      */
-    public function peakHour(Request $request, int $restaurantId)
+    public function peakHour(AnalyticsRequest $request, int $restaurantId)
     {
         $date = $request->query('date', now()->toDateString());
 
@@ -71,7 +71,7 @@ class AnalyticsController extends Controller
      * Returns paginated orders for a restaurant within a date range.
      * Query params: start_date, end_date, page (default 1), per_page (default 15, max 50)
      */
-    public function orders(Request $request, int $restaurantId)
+    public function orders(AnalyticsRequest $request, int $restaurantId)
     {
         $startDate = $request->query('start_date', now()->subDays(7)->toDateString());
         $endDate   = $request->query('end_date', now()->toDateString());
@@ -93,7 +93,7 @@ class AnalyticsController extends Controller
      * Returns whether the current hour is within the average peak hour.
      * Query params: start_date, end_date (default: last 7 days)
      */
-    public function isPeakHour(Request $request, int $restaurantId)
+    public function isPeakHour(AnalyticsRequest $request, int $restaurantId)
     {
         $startDate = $request->query('start_date', now()->subDays(7)->toDateString());
         $endDate   = $request->query('end_date', now()->toDateString());

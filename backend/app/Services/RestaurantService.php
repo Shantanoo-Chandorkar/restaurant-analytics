@@ -31,16 +31,19 @@ class RestaurantService {
             return Cache::remember($cacheKey, 900, function () use ($filters, $sortBy, $sortDir, $startDate, $endDate) {
                 $endOfDay = $this->endOfDay($endDate);
 
-                return Restaurant::leftJoin('orders', function ($join) use ($startDate, $endOfDay) {
-                        $join->on('orders.restaurant_id', '=', 'restaurants.id')
-                             ->whereBetween('orders.order_time', [$startDate, $endOfDay]);
-                    })
+                $sub = DB::table('orders')
+                    ->selectRaw('restaurant_id, COUNT(id) as sub_orders, SUM(order_amount) as sub_revenue, AVG(order_amount) as sub_aov')
+                    ->whereBetween('order_time', [$startDate, $endOfDay])
+                    ->groupBy('restaurant_id');
+
+                return Restaurant::leftJoinSub($sub, 'order_stats', fn($join) =>
+                        $join->on('order_stats.restaurant_id', '=', 'restaurants.id')
+                    )
                     ->select('restaurants.*')
-                    ->selectRaw('COUNT(orders.id) as summary_orders, COALESCE(SUM(orders.order_amount), 0) as summary_revenue, COALESCE(AVG(orders.order_amount), 0) as summary_aov')
+                    ->selectRaw('COALESCE(order_stats.sub_orders, 0) as summary_orders, COALESCE(order_stats.sub_revenue, 0) as summary_revenue, COALESCE(order_stats.sub_aov, 0) as summary_aov')
                     ->when($filters['search'] ?? null, fn($q, $v) => $q->where('restaurants.name', 'like', '%' . $v . '%'))
                     ->when($filters['cuisine'] ?? null, fn($q, $v) => $q->where('restaurants.cuisine', $v))
                     ->when($filters['location'] ?? null, fn($q, $v) => $q->where('restaurants.location', $v))
-                    ->groupBy('restaurants.id')
                     ->orderBy("restaurants.{$sortBy}", $sortDir)
                     ->get()
                     ->map(fn($r) => array_merge($r->toArray(), [
